@@ -29,6 +29,9 @@
      stay minimal.
 
 3. `rtl/` — synthesizable SystemVerilog source, one module per file
+   - `rtl/generic/` — standard reusable leaf cells (flip-flops, muxes, adders, ...),
+     behavioral style, parameterized; documented in `rtl/generic/README.md`, which also
+     tracks where each module is used
    - `rtl/core/` — the RISC-V pipeline core
      - `ifu/` — Instruction Fetch Unit (`F` stage)
      - `idu/` — Instruction Decode Unit (`D` stage)

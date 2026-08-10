@@ -1,4 +1,4 @@
-TOPLEVEL_DIR := $(shell git rev-parse --show-toplevel)
+TOPLEVEL_DIR := $(abspath ../../..)
 
 TOPLEVEL     = wbu
 MODULE       = test_wbu

@@ -1,4 +1,4 @@
-# HIPV — HIP RISC-V SoC
+# HIPV-SOC — HIP RISC-V SoC
 
 Pedagogical RISC-V pipelined SoC. See `NamingConvention.md` for the RTL coding
 standard and `FolderStructure.md` for the project layout.

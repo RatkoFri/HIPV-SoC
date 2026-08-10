@@ -1,4 +1,4 @@
-TOPLEVEL_DIR := $(shell git rev-parse --show-toplevel)
+TOPLEVEL_DIR := $(abspath ../../..)
 
 TOPLEVEL     = lsu
 MODULE       = test_lsu
