@@ -1,0 +1,15 @@
+# Shared cocotb/Verilator settings, included by every tb/**/Makefile.
+# Usage in a leaf Makefile:
+#   TOPLEVEL_DIR := $(shell git rev-parse --show-toplevel)
+#   include $(TOPLEVEL_DIR)/tb/common/Makefile.include
+
+SIM            ?= verilator
+TOPLEVEL_LANG  ?= verilog
+
+EXTRA_ARGS += --trace --trace-structs -Wall
+EXTRA_ARGS += -Wno-DECLFILENAME
+
+COCOTB_HDL_TIMEUNIT      = 1ns
+COCOTB_HDL_TIMEPRECISION = 1ps
+
+include $(shell cocotb-config --makefiles)/Makefile.sim

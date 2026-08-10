@@ -1,0 +1,11 @@
+# cocotb / Verilator build artifacts
+sim_build/
+*.vcd
+*.fst
+results.xml
+__pycache__/
+*.pyc
+
+# synthesis / fpga build outputs
+fpga/build/
+syn/build/
