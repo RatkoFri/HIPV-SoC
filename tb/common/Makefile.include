@@ -1,12 +1,24 @@
 # Shared cocotb/Verilator settings, included by every tb/**/Makefile.
 # Usage in a leaf Makefile:
-#   TOPLEVEL_DIR := $(shell git rev-parse --show-toplevel)
+#   TOPLEVEL_DIR := $(abspath ../../..)
 #   include $(TOPLEVEL_DIR)/tb/common/Makefile.include
+#
+# Options:
+#   WAVES=1   enable waveform tracing; dump.vcd is written into the test directory
+#             (use a fresh/clean SIM_BUILD when toggling, the flags change)
 
 SIM            ?= verilator
 TOPLEVEL_LANG  ?= verilog
 
-EXTRA_ARGS += --trace --trace-structs -Wall
+# shared Python testbench utilities (obi.py, rv32i.py)
+export PYTHONPATH := $(TOPLEVEL_DIR)/tb/common:$(PYTHONPATH)
+
+WAVES ?= 0
+ifeq ($(WAVES),1)
+  EXTRA_ARGS += --trace --trace-structs
+endif
+
+EXTRA_ARGS += -Wall
 EXTRA_ARGS += -Wno-DECLFILENAME
 
 COCOTB_HDL_TIMEUNIT      = 1ns
