@@ -5,10 +5,15 @@ holds them in the F/D pipeline register, decodes them into control signals, read
 register file and extends the immediate. Its outputs feed the Execute stage through a
 `ValidD`/`ReadyE` handshake.
 
-Files: `rtl/core/idu/idu.sv` (structural stage), `rtl/core/idu/idudec.sv` (behavioral
-control decoder), `rtl/core/idu/extend.sv` (immediate extension),
-`rtl/core/regfile/regfile.sv` (register file). Shared encodings:
-`config/hipv_pkg.sv`. Testbench: `tb/unit/idu/`.
+Files: 
+- `rtl/core/idu/idu.sv` (structural stage), `rtl/core/idu/idudec.sv` (behavioral
+control decoder)
+- `rtl/core/idu/extend.sv` (immediate extension),
+- `rtl/core/regfile/regfile.sv` (register file). 
+- Shared encodings:
+`config/hipv_pkg.sv`. 
+
+Testbench: `tb/unit/idu/`.
 
 ## Block diagram
 

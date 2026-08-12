@@ -5,6 +5,7 @@ Pedagogical 5-stage pipelined RV32I core and SoC, developed for lectures.
 - Coding standard: `NamingConvention.md`; project layout: `FolderStructure.md`
 - Core documentation: `docs/CORE.md` (overview) and per-stage `docs/{IFU,IDU,IEU,LSU,WBU,HAZARD}.md`
 - Standard modules: `rtl/generic/README.md`
+- Learning cocotb: `docs/CocotbTutorial.md` (runnable examples in `docs/cocotb_tutorial/`)
 
 ## Status
 

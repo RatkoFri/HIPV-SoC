@@ -18,8 +18,8 @@
 ///////////////////////////////////////////////////////////////////////
 
 module ifuctrl (input  logic clk, reset,
-                input  logic ObiGntF, ObiRvalidF,
-                input  logic ReadyD, PCSrcE,
+                input  logic ObiGntF, ObiRvalidF, // From OBI memory
+                input  logic ReadyD, PCSrcE,  // From Decode and Execute
                 output logic ObiReqF, PCEnF, InstrEnF, ValidF);
 
   typedef enum logic [1:0] {REQUEST, WAIT_RESP, DONE} statetype;

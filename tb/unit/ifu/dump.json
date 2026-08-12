@@ -1,0 +1,259 @@
+{
+  "extensionVersion": "1.5.4",
+  "fileName": "/Users/ratko.pilipovic/Library/CloudStorage/OneDrive-UniverzavLjubljani/Predmeti/DN/2026_27/HIPV/tb/unit/ifu/dump.vcd",
+  "markerTime": 555005,
+  "altMarkerTime": null,
+  "displayTimeUnit": "ps",
+  "selectedSignal": {
+    "name": "ifu.PCF",
+    "msb": 31,
+    "lsb": 0
+  },
+  "zoomRatio": 0.005797580588166947,
+  "scrollLeft": 469112,
+  "defaultPixelTime": 1000000,
+  "displayedSignals": [
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 14,
+      "name": "ifu.clk",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "clk",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 15,
+      "name": "ifu.reset",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "reset",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "signal-group",
+      "groupName": "Pipeline HS",
+      "collapseState": 2,
+      "children": [
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 16,
+          "name": "ifu.ReadyD",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ReadyD",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 17,
+          "name": "ifu.ValidF",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ValidF",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 18,
+          "name": "ifu.PCSrcE",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "PCSrcE",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 19,
+          "name": "ifu.PCTargetE",
+          "numberFormat": "hexadecimal",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "PCTargetE",
+          "renderType": "multiBit",
+          "valueLinkEnable": false
+        }
+      ]
+    },
+    {
+      "dataType": "signal-group",
+      "groupName": "ToDecode",
+      "collapseState": 2,
+      "children": [
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 22,
+          "name": "ifu.PCPlus4F",
+          "numberFormat": "hexadecimal",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "PCPlus4F",
+          "renderType": "multiBit",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 21,
+          "name": "ifu.PCF",
+          "numberFormat": "hexadecimal",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "PCF",
+          "renderType": "multiBit",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 30,
+          "name": "ifu.InstrEnF",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "InstrEnF",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        }
+      ]
+    },
+    {
+      "dataType": "signal-group",
+      "groupName": "OBI",
+      "collapseState": 2,
+      "children": [
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 23,
+          "name": "ifu.ObiReqF",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ObiReqF",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 26,
+          "name": "ifu.ObiRvalidF",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ObiRvalidF",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 24,
+          "name": "ifu.ObiGntF",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ObiGntF",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 26,
+          "name": "ifu.ObiRvalidF",
+          "numberFormat": "binary",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ObiRvalidF",
+          "renderType": "binary",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
+          "netlistId": 25,
+          "name": "ifu.ObiAddrF",
+          "numberFormat": "hexadecimal",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "ObiAddrF",
+          "renderType": "multiBit",
+          "valueLinkEnable": false
+        }
+      ]
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 41,
+      "name": "ifu.ctrl.State",
+      "numberFormat": "hexadecimal",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "State",
+      "renderType": "multiBit",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 43,
+      "name": "ifu.ctrl.DiscardF",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "DiscardF",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 29,
+      "name": "ifu.PCEnF",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "PCEnF",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    }
+  ]
+}

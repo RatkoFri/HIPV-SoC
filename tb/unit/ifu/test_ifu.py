@@ -7,6 +7,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge
+import logging
 
 
 def imem_word(addr):
@@ -67,9 +68,12 @@ async def wait_valid(dut, max_cycles=50):
 @cocotb.test()
 async def test_first_fetch(dut):
     """First instruction after reset comes from address 0."""
+    logger = logging.getLogger("my_testbench")
     await start(dut)
     pc, instr = await wait_valid(dut)
     assert pc == 0, f"PCF={hex(pc)}"
+    dut._log.info(f"First fetch: PCF={hex(pc)}, InstrF={hex(instr)}")
+
     assert instr == imem_word(0), f"InstrF={hex(instr)}"
 
 
@@ -79,6 +83,7 @@ async def test_sequential_fetch(dut):
     await start(dut)
     for expected_pc in range(0, 6 * 4, 4):
         pc, instr = await wait_valid(dut)
+        dut._log.info(f"Sequential fetch: PCF={hex(pc)}, InstrF={hex(instr)}")
         assert pc == expected_pc, f"PCF={hex(pc)}, expected {hex(expected_pc)}"
         assert instr == imem_word(expected_pc), f"InstrF={hex(instr)}"
 
