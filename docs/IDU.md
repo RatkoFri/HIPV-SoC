@@ -22,7 +22,7 @@ Testbench: `tb/unit/idu/`.
  InstrF ──┼─>│  F/D regs   │── InstrD ──┬──> fields: Rs1D, Rs2D, RdD, Funct3D
  PCF ─────┼─>│ (flopenr ×3 │            ├──> idudec ──> controls (RegWriteD, ...)
  PCPlus4F ┼─>│  + valid    │            └──> extend ──> ImmExtD
- ReadyD <─┘  │    bit)     │── PCD, PCPlus4D ──>
+ ReadyD <─-- │    bit)     │── PCD, PCPlus4D ──>
  PCSrcE ────>└─────────────┘
                   Rs1D/Rs2D ──> regfile (A1/A2) ──> RD1D, RD2D
     RegWriteW/RdW/ResultW ────> regfile (WE3/A3/WD3)   [from Writeback]

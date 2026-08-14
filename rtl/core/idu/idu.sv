@@ -49,8 +49,9 @@ module idu (input  logic        clk, reset,
   // F/D valid bit, cleared by a flush
   always_ff @(posedge clk)
     if (reset) ValidDReg <= 1'b0;
-    else if (PCSrcE) ValidDReg <= 1'b0;
     else if (ReadyD) ValidDReg <= ValidF;
+    //else if (PCSrcE) ValidDReg <= 1'b0;
+    //else if (ReadyD) ValidDReg <= ValidF;
 
   // F/D pipeline registers
   flopenr #(32) instrreg(.clk(clk), .reset(reset), .en(EnFD), .D(InstrF), .Q(InstrD));

@@ -17,17 +17,17 @@ Files: `rtl/core/ieu/ieu.sv` (structural stage), `rtl/core/ieu/alu.sv`,
  (operands,   │ (flopenr,  │ RD2E │ (mux3)  │   PCE ─>│ (mux3)  │      v
   controls,   │ valid bit) │──┐   └─────────┘  zero ─>└─────────┘   ┌─────┐
   ValidD/     └────────────┘  │        ^ ForwardAE                  │ alu │─> ALUResultE
-  ReadyE)          │          v   ResultW/ForwardDataM                └─────┘
+  ReadyE)          │          v   ResultW/ForwardDataM              └─────┘
                    │   ┌─────────┐ WriteDataE ┌─────────┐ SrcBE        ^
                    │   │ fwdbmux │──────┬────>│ srcbmux │──────────────┘
                    │   │ (mux3)  │      │     │ (mux2)  │<── ImmExtE
                    │   └─────────┘      │     └─────────┘
                    │        FwdAE ──┐   │
                    │                v   v
-                   │           ┌───────────┐          ┌──────────────────────┐
+                   │           ┌───────────┐           ┌──────────────────────┐
                    │           │ branchcmp │─ TakenE ─>│ PCSrcE = Valid &     │
-                   │           └───────────┘          │  (Jump|Jalr|Br&Taken)│
-                   │  PCE ──> ┌───────────┐           └──────────────────────┘
+                   │           └───────────┘           │  (Jump|Jalr|Br&Taken)│
+                   │  PCE ──> ┌───────────┐            └──────────────────────┘
                    │  ImmExtE>│ targetadd │─┐ ┌──────────┐
                    │          └───────────┘ └>│targetmux │──> PCTargetE
                    │     {ALUResultE[31:1],0}>│ (mux2)   │   (jalr selects ALU)
@@ -36,12 +36,15 @@ Files: `rtl/core/ieu/ieu.sv` (structural stage), `rtl/core/ieu/alu.sv`,
 
 ## Ports (summary)
 
-Decode side: `ValidD`/`ReadyE` handshake plus all D-stage outputs (operands, register
-specifiers, controls — see `docs/IDU.md`). Memory side: `ValidE`/`ReadyM` handshake and
+- Decode side:  `ValidD`/`ReadyE` handshake plus all D-stage outputs (operands, register
+specifiers, controls — see `docs/IDU.md`). 
+- Memory side: `ValidE`/`ReadyM` handshake and
 the stage payload `ALUResultE`, `WriteDataE` (forwarded rs2, store data), `PCPlus4E`,
-`RdE`, `Funct3E`, `RegWriteE`, `MemWriteE`, `ResultSrcE`. Hazard-unit side:
+`RdE`, `Funct3E`, `RegWriteE`, `MemWriteE`, `ResultSrcE`. 
+- Hazard-unit side:
 `ForwardAE`/`ForwardBE` selects with `ForwardDataM` and `ResultW` data inputs, and
-`Rs1E`/`Rs2E` exported for the forwarding decision. Redirect: `PCSrcE`, `PCTargetE`.
+`Rs1E`/`Rs2E` exported for the forwarding decision. 
+- Redirect: `PCSrcE`, `PCTargetE`.
 
 ## Operand selection
 

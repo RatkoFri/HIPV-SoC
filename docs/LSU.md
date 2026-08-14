@@ -7,19 +7,20 @@ arrives. File: `rtl/core/lsu/lsu.sv`. Testbench: `tb/unit/lsu/`.
 
 ## Ports (summary)
 
-Execute side: `ValidE`/`ReadyM` handshake with payload `ALUResultE` (address or
+- Execute side: `ValidE`/`ReadyM` handshake with payload `ALUResultE` (address or
 result), `WriteDataE` (store data), `PCPlus4E`, `RdE`, `Funct3E`, `RegWriteE`,
-`MemWriteE`, `ResultSrcE`. Writeback side: `ValidM`/`ReadyW` with `ALUResultM`,
+`MemWriteE`, `ResultSrcE`. 
+- Writeback side: `ValidM`/`ReadyW` with `ALUResultM`,
 `ReadDataM`, `PCPlus4M`, `RdM`, `RegWriteM` (valid-qualified), `ResultSrcM`.
-Forwarding: `ForwardDataM`. OBI data port: `ObiReqM/ObiGntM/ObiAddrM/ObiWeM/ObiBeM/
-ObiWdataM/ObiRvalidM/ObiRdataM`.
+Forwarding: `ForwardDataM`. 
+- OBI data port: `ObiReqM/ObiGntM/ObiAddrM/ObiWeM/ObiBeM/ObiWdataM/ObiRvalidM/ObiRdataM`.
 
 ## Operation
 
-`MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM)` marks a memory instruction. The
+- `MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM)` marks a memory instruction. The
 stage presents `ValidM = ValidMReg & (~MemOpM | DoneM)`: pass-through for non-memory
-instructions, completion-gated for memory ones. `ReadyM = ~ValidMReg | (ValidM &
-ReadyW)`, so the Execute stage is back-pressured for exactly the duration of the bus
+instructions, completion-gated for memory ones. 
+- `ReadyM = ~ValidMReg | (ValidM &ReadyW)`, so the Execute stage is back-pressured for exactly the duration of the bus
 access — this is what makes a dedicated load-use stall unnecessary (see
 `docs/HAZARD.md`).
 

@@ -62,3 +62,8 @@ and the same programs against slow memories. Run with `make` in `tb/core`.
 
 Next steps toward the SoC: memory models in `rtl/mem/`, an OBI interconnect in
 `rtl/interconnect/`, peripherals in `rtl/periph/`, and `rtl/top/hipv_soc.sv`.
+
+## ToDo
+
+- Enable support for traps and interrupts (ecall, ebreak, mret, CSR, timer, external).
+- write limitations: no misaligned accesses, no write buffer (store occupies M until OBI response).

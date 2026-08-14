@@ -1,0 +1,75 @@
+{
+  "extensionVersion": "1.5.4",
+  "fileName": "/Users/ratko.pilipovic/Library/CloudStorage/OneDrive-UniverzavLjubljani/Predmeti/DN/2026_27/HIPV/tb/unit/idu/dump.vcd",
+  "markerTime": null,
+  "altMarkerTime": null,
+  "displayTimeUnit": "ps",
+  "selectedSignal": {
+    "name": "idu.ReadyD",
+    "msb": -1,
+    "lsb": -1
+  },
+  "zoomRatio": 0.0011315641438372627,
+  "scrollLeft": 0,
+  "defaultPixelTime": 1000000,
+  "displayedSignals": [
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 64,
+      "name": "idu.clk",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "clk",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 65,
+      "name": "idu.reset",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "reset",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "signal-group",
+      "groupName": "HS IFU",
+      "collapseState": 2,
+      "children": []
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 66,
+      "name": "idu.ValidF",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "ValidF",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 67,
+      "name": "idu.ReadyD",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "ReadyD",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    }
+  ]
+}
