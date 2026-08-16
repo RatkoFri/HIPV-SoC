@@ -43,7 +43,8 @@
      - `hipv_core.sv` — core top-level, connects the stages above
    - `rtl/mem/` — caches and on-chip memories (I$, D$, SRAM wrappers)
    - `rtl/periph/` — peripherals (UART, GPIO, timer, interrupt controller, ...)
-   - `rtl/interconnect/` — bus fabric / crossbar / interconnect glue
+   - `rtl/interconnect/` — OBI crossbar (`obi_xbar`), address decoder and arbiter;
+     see `docs/INTERCONNECT.md`
    - `rtl/top/` — SoC top-level integration (`hipv_soc.sv`)
 
 4. `tb/` — cocotb testbenches (Verilator as SIM), mirroring the `rtl/` hierarchy
@@ -77,7 +78,8 @@
 8. `syn/` — ASIC/logic synthesis scripts and constraints, kept separate from FPGA flow
 
 9. `config/` — parameter packages and configuration
-   - `config/hipv_pkg.sv` — global parameter structure, shared typedefs/constants
+   - `config/hipv_pkg.sv` — core control encodings and RV32I opcodes
+   - `config/hipv_soc_pkg.sv` — SoC address map, master/slave indices, arbiter policies
    - alternate configs (e.g. `config/minimal_pkg.sv`, `config/full_pkg.sv`) for different
      lecture stages or feature sets
 

@@ -3,6 +3,7 @@
 Pedagogical 5-stage pipelined RV32I core and SoC, developed for lectures.
 
 - Coding standard: `NamingConvention.md`; project layout: `FolderStructure.md`
+- Interconnect: `docs/INTERCONNECT.md`
 - Core documentation: `docs/CORE.md` (overview) and per-stage `docs/{IFU,IDU,IEU,LSU,WBU,HAZARD}.md`
 - Standard modules: `rtl/generic/README.md`
 - Learning cocotb: `docs/CocotbTutorial.md` (runnable examples in `docs/cocotb_tutorial/`)
@@ -12,7 +13,8 @@ Pedagogical 5-stage pipelined RV32I core and SoC, developed for lectures.
 | Component | State |
 |-----------|-------|
 | ifu, idu, ieu, lsu, wbu, hazard, hipv_core | implemented + tested |
-| SoC (memories, interconnect, peripherals, hipv_soc) | not started |
+| interconnect (obi_xbar, decoder, arbiter) | implemented + tested |
+| SoC memories, peripherals, hipv_soc | not started |
 
 ## Verification
 
