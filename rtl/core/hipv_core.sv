@@ -54,8 +54,14 @@ module hipv_core (input  logic        clk, reset,
   logic [4:0]  RdM;
   logic        RegWriteM;
   logic [1:0]  ResultSrcM;
-  // W outputs
-  logic        ValidW, RegWriteW;
+  // W outputs. ValidW marks instruction retirement: nothing in the core
+  // consumes it (RegWriteW is already valid-qualified), but it is kept
+  // as a retirement marker for waveform debugging and as the hook for a
+  // future trace/RVFI port.
+  /* verilator lint_off UNUSEDSIGNAL */
+  logic        ValidW;
+  /* verilator lint_on UNUSEDSIGNAL */
+  logic        RegWriteW;
   logic [4:0]  RdW;
   logic [31:0] ResultW;
   // forwarding

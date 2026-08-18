@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="580" viewBox="0 0 960 580" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs>
+<rect width="960" height="580" fill="white"/>
+<text x="480" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#0f172a">obi_xbar — topology (address phase left to right, response phase back)</text>
+<rect x="30" y="90" width="150" height="56" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.8"/>
+<text x="105.0" y="111.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">MASTER_D</text>
+<text x="105.0" y="130.0" text-anchor="middle" font-size="11" fill="#475569">LSU (data)</text>
+<rect x="30" y="190" width="150" height="56" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.8"/>
+<text x="105.0" y="211.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">MASTER_I</text>
+<text x="105.0" y="230.0" text-anchor="middle" font-size="11" fill="#475569">IFU (fetch)</text>
+<rect x="240" y="90" width="130" height="56" rx="8" fill="#f3e8ff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="305.0" y="111.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">obi_decoder</text>
+<text x="305.0" y="130.0" text-anchor="middle" font-size="11" fill="#475569">SlaveSel, DecErr</text>
+<rect x="240" y="190" width="130" height="56" rx="8" fill="#f3e8ff" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="305.0" y="211.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">obi_decoder</text>
+<text x="305.0" y="230.0" text-anchor="middle" font-size="11" fill="#475569">SlaveSel, DecErr</text>
+<line x1="180" y1="118" x2="238" y2="118" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="209" y="106" text-anchor="middle" font-size="11" fill="#334155">MReq, MAddr</text>
+<line x1="180" y1="218" x2="238" y2="218" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="209" y="206" text-anchor="middle" font-size="11" fill="#334155">MReq, MAddr</text>
+<rect x="430" y="70" width="210" height="210" rx="8" fill="#ffedd5" stroke="#ea580c" stroke-width="1.8"/>
+<text x="535.0" y="92" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">per slave s</text>
+<text x="535" y="112" text-anchor="middle" font-size="12" fill="#7c2d12">SlaveReqM[s]: masters</text>
+<text x="535" y="138" text-anchor="middle" font-size="12" fill="#7c2d12">targeting s</text>
+<text x="535" y="164" text-anchor="middle" font-size="12" fill="#7c2d12">obi_arbiter &#8594; GrantM[s]</text>
+<text x="535" y="190" text-anchor="middle" font-size="12" fill="#7c2d12">request mux: winner&#39;s</text>
+<text x="535" y="216" text-anchor="middle" font-size="12" fill="#7c2d12">Addr / We / Be / Wdata</text>
+<text x="535" y="242" text-anchor="middle" font-size="12" fill="#7c2d12">SlaveBusy[s] gate</text>
+<line x1="370" y1="118" x2="428" y2="130" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="399.0" y="118.0" text-anchor="middle" font-size="11" fill="#334155">SlaveSel</text>
+<line x1="370" y1="218" x2="428" y2="230" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="399.0" y="218.0" text-anchor="middle" font-size="11" fill="#334155">SlaveSel</text>
+<rect x="770" y="60" width="150" height="46" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+<text x="845.0" y="88.0" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">IMEM</text>
+<line x1="640" y1="175" x2="768" y2="83" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="770" y="122" width="150" height="46" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+<text x="845.0" y="150.0" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">DMEM</text>
+<line x1="640" y1="175" x2="768" y2="145" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="770" y="184" width="150" height="46" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+<text x="845.0" y="212.0" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">UART</text>
+<line x1="640" y1="175" x2="768" y2="207" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="770" y="246" width="150" height="46" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+<text x="845.0" y="274.0" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">TIMER</text>
+<line x1="640" y1="175" x2="768" y2="269" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<rect x="770" y="308" width="150" height="46" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+<text x="845.0" y="336.0" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">GPIO</text>
+<line x1="640" y1="175" x2="768" y2="331" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="700" y="48" text-anchor="middle" font-size="11" fill="#334155">SReq/SGnt + SAddr/SWe/SBe/SWdata</text>
+<rect x="430" y="330" width="210" height="60" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="1.8"/>
+<text x="535.0" y="353.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">error responder</text>
+<text x="535.0" y="372.0" text-anchor="middle" font-size="11" fill="#475569">DecErr: grant now, rvalid+0 next</text>
+<path d="M305,246 L305,360 L428,360" fill="none" stroke="#dc2626" stroke-width="1.6" marker-end="url(#arr)" stroke-dasharray="5,4"/>
+<text x="340" y="350" text-anchor="middle" font-size="11" fill="#dc2626">unmapped</text>
+<text x="660" y="425" text-anchor="start" font-size="11" fill="#ea580c">MGnt = NormalGnt | ErrGnt</text>
+<rect x="430" y="440" width="210" height="80" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.8"/>
+<text x="535.0" y="462" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">response routing</text>
+<text x="535" y="486" text-anchor="middle" font-size="12" fill="#075985">per master m:</text>
+<text x="535" y="504" text-anchor="middle" font-size="12" fill="#075985">PendValid[m], PendSlave[m]</text>
+<path d="M845,380 L845,480 L642,480" fill="none" stroke="#0284c7" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="770" y="470" text-anchor="middle" font-size="11" fill="#0284c7">SRvalid / SRdata</text>
+<path d="M428,480 L105,480 L105,248" fill="none" stroke="#0284c7" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="250" y="470" text-anchor="middle" font-size="11" fill="#0284c7">MRvalid / MRdata</text>
+<line x1="535" y1="392" x2="535" y2="438" stroke="#dc2626" stroke-width="1.6" marker-end="url(#arr)" stroke-dasharray="5,4"/>
+</svg>

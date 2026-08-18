@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="850" height="640" viewBox="0 0 850 640" font-family="Helvetica,Arial,sans-serif">
+<rect width="850" height="640" fill="white"/>
+<text x="425.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#0f172a">Both masters read DMEM — measured trace (ARB_FIXED, 1-cycle slave)</text>
+<text x="425.0" y="46" text-anchor="middle" font-size="12" fill="#475569">D wins, I is held by SlaveBusy, then served: 2 + 2 cycles</text>
+<line x1="170" y1="70" x2="170" y2="530" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="300" y1="70" x2="300" y2="530" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="430" y1="70" x2="430" y2="530" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="560" y1="70" x2="560" y2="530" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="690" y1="70" x2="690" y2="530" stroke="#e2e8f0" stroke-width="1"/>
+<line x1="820" y1="70" x2="820" y2="530" stroke="#e2e8f0" stroke-width="1"/>
+<text x="235.0" y="64" text-anchor="middle" font-size="12" fill="#64748b">cycle 0</text>
+<text x="365.0" y="64" text-anchor="middle" font-size="12" fill="#64748b">cycle 1</text>
+<text x="495.0" y="64" text-anchor="middle" font-size="12" fill="#64748b">cycle 2</text>
+<text x="625.0" y="64" text-anchor="middle" font-size="12" fill="#64748b">cycle 3</text>
+<text x="755.0" y="64" text-anchor="middle" font-size="12" fill="#64748b">cycle 4</text>
+<text x="160" y="110" text-anchor="end" font-size="12.5" font-weight="bold" fill="#334155">clk</text>
+<path d="M170,118 L170,98 L235.0,98 L235.0,118 L300,118 L300,118 L300,98 L365.0,98 L365.0,118 L430,118 L430,118 L430,98 L495.0,98 L495.0,118 L560,118 L560,118 L560,98 L625.0,98 L625.0,118 L690,118 L690,118 L690,98 L755.0,98 L755.0,118 L820,118" fill="none" stroke="#334155" stroke-width="1.8"/>
+<text x="160" y="150" text-anchor="end" font-size="12.5" font-weight="bold" fill="#2563eb">MReq[D]</text>
+<rect x="170" y="138" width="130" height="20" fill="#dbeafe"/>
+<path d="M170,138 L300,138 L300,138 L300,158 L430,158 L560,158 L690,158 L820,158" fill="none" stroke="#2563eb" stroke-width="1.8"/>
+<text x="160" y="190" text-anchor="end" font-size="12.5" font-weight="bold" fill="#2563eb">MGnt[D]</text>
+<rect x="170" y="178" width="130" height="20" fill="#dbeafe"/>
+<path d="M170,178 L300,178 L300,178 L300,198 L430,198 L560,198 L690,198 L820,198" fill="none" stroke="#2563eb" stroke-width="1.8"/>
+<text x="160" y="230" text-anchor="end" font-size="12.5" font-weight="bold" fill="#2563eb">MRvalid[D]</text>
+<rect x="300" y="218" width="130" height="20" fill="#dbeafe"/>
+<path d="M170,238 L300,238 L300,238 L300,218 L430,218 L430,218 L430,238 L560,238 L690,238 L820,238" fill="none" stroke="#2563eb" stroke-width="1.8"/>
+<text x="160" y="270" text-anchor="end" font-size="12.5" font-weight="bold" fill="#ea580c">MReq[I]</text>
+<rect x="170" y="258" width="130" height="20" fill="#fed7aa"/>
+<rect x="300" y="258" width="130" height="20" fill="#fed7aa"/>
+<rect x="430" y="258" width="130" height="20" fill="#fed7aa"/>
+<path d="M170,258 L300,258 L430,258 L560,258 L560,258 L560,278 L690,278 L820,278" fill="none" stroke="#ea580c" stroke-width="1.8"/>
+<text x="160" y="310" text-anchor="end" font-size="12.5" font-weight="bold" fill="#ea580c">MGnt[I]</text>
+<rect x="430" y="298" width="130" height="20" fill="#fed7aa"/>
+<path d="M170,318 L300,318 L430,318 L430,318 L430,298 L560,298 L560,298 L560,318 L690,318 L820,318" fill="none" stroke="#ea580c" stroke-width="1.8"/>
+<text x="160" y="350" text-anchor="end" font-size="12.5" font-weight="bold" fill="#ea580c">MRvalid[I]</text>
+<rect x="560" y="338" width="130" height="20" fill="#fed7aa"/>
+<path d="M170,358 L300,358 L430,358 L560,358 L560,358 L560,338 L690,338 L690,338 L690,358 L820,358" fill="none" stroke="#ea580c" stroke-width="1.8"/>
+<text x="160" y="390" text-anchor="end" font-size="12.5" font-weight="bold" fill="#16a34a">SReq[DMEM]</text>
+<rect x="170" y="378" width="130" height="20" fill="#bbf7d0"/>
+<rect x="430" y="378" width="130" height="20" fill="#bbf7d0"/>
+<path d="M170,378 L300,378 L300,378 L300,398 L430,398 L430,398 L430,378 L560,378 L560,378 L560,398 L690,398 L820,398" fill="none" stroke="#16a34a" stroke-width="1.8"/>
+<text x="160" y="430" text-anchor="end" font-size="12.5" font-weight="bold" fill="#16a34a">SGnt[DMEM]</text>
+<rect x="170" y="418" width="130" height="20" fill="#bbf7d0"/>
+<rect x="430" y="418" width="130" height="20" fill="#bbf7d0"/>
+<path d="M170,418 L300,418 L300,418 L300,438 L430,438 L430,438 L430,418 L560,418 L560,418 L560,438 L690,438 L820,438" fill="none" stroke="#16a34a" stroke-width="1.8"/>
+<text x="160" y="470" text-anchor="end" font-size="12.5" font-weight="bold" fill="#16a34a">SlaveBusy[DMEM]</text>
+<rect x="300" y="458" width="130" height="20" fill="#bbf7d0"/>
+<rect x="560" y="458" width="130" height="20" fill="#bbf7d0"/>
+<path d="M170,478 L300,478 L300,478 L300,458 L430,458 L430,458 L430,478 L560,478 L560,478 L560,458 L690,458 L690,458 L690,478 L820,478" fill="none" stroke="#16a34a" stroke-width="1.8"/>
+<text x="160" y="510" text-anchor="end" font-size="12.5" font-weight="bold" fill="#16a34a">SRvalid[DMEM]</text>
+<rect x="300" y="498" width="130" height="20" fill="#bbf7d0"/>
+<rect x="560" y="498" width="130" height="20" fill="#bbf7d0"/>
+<path d="M170,518 L300,518 L300,518 L300,498 L430,498 L430,498 L430,518 L560,518 L560,518 L560,498 L690,498 L690,498 L690,518 L820,518" fill="none" stroke="#16a34a" stroke-width="1.8"/>
+<text x="235.0" y="554" text-anchor="middle" font-size="11.5" fill="#334155">D granted; I loses</text>
+<text x="365.0" y="572" text-anchor="middle" font-size="11.5" fill="#334155">resp &#8594; D; I blocked (busy)</text>
+<text x="495.0" y="554" text-anchor="middle" font-size="11.5" fill="#334155">I granted</text>
+<text x="625.0" y="572" text-anchor="middle" font-size="11.5" fill="#334155">resp &#8594; I</text>
+<text x="170" y="610" text-anchor="start" font-size="11" fill="#64748b">PendSlave[D] = DMEM during cycle 1; PendSlave[I] = DMEM during cycle 3 (loaded at each grant, used by the response mux)</text>
+</svg>

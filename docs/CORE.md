@@ -60,8 +60,9 @@ arithmetic chains (forwarding), load-use sequences, taken/not-taken branch loops
 `jal`/`jalr` call and return, `lui`/`auipc`, byte/half accesses with sign extension,
 and the same programs against slow memories. Run with `make` in `tb/core`.
 
-Next steps toward the SoC: memory models in `rtl/mem/`, an OBI interconnect in
-`rtl/interconnect/`, peripherals in `rtl/periph/`, and `rtl/top/hipv_soc.sv`.
+The SoC around this core is complete: unified memory (`rtl/mem/`), OBI crossbar
+(`rtl/interconnect/`), UART/timer/GPIO (`rtl/periph/`) and the top level
+`rtl/top/hipv_soc.sv` — see `docs/SOC.md`.
 
 ## ToDo
 

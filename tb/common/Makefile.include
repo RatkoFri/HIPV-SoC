@@ -24,4 +24,20 @@ EXTRA_ARGS += -Wno-DECLFILENAME
 COCOTB_HDL_TIMEUNIT      = 1ns
 COCOTB_HDL_TIMEPRECISION = 1ps
 
+# Workaround for Verilator packages that ship verilated.mk with an empty
+# CFG_CXXFLAGS_PCH_I (seen in the pip wheel). The precompiled header is
+# then handed to the compiler as a plain input file instead of via
+# -include, and the C++ build fails once a design is large enough to use
+# a PCH — the SoC testbench hits it, the unit ones do not. Only applied
+# when that variable is actually empty, so a correctly packaged
+# Verilator is left alone.
+VERILATOR_ROOT_DIR := $(shell verilator --getenv VERILATOR_ROOT 2>/dev/null)
+ifneq ($(wildcard $(VERILATOR_ROOT_DIR)/include/verilated.mk),)
+  PCH_I_EMPTY := $(shell grep -c '^CFG_CXXFLAGS_PCH_I *= *$$' \
+                   $(VERILATOR_ROOT_DIR)/include/verilated.mk 2>/dev/null)
+  ifeq ($(PCH_I_EMPTY),1)
+    BUILD_ARGS += CFG_CXXFLAGS_PCH_I=-include
+  endif
+endif
+
 include $(shell cocotb-config --makefiles)/Makefile.sim

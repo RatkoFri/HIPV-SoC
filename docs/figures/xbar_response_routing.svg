@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="430" viewBox="0 0 900 430" font-family="Helvetica,Arial,sans-serif">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs>
+<rect width="900" height="430" fill="white"/>
+<text x="450" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#0f172a">obi_xbar — response routing for one master m</text>
+<rect x="40" y="70" width="190" height="54" rx="8" fill="#ffedd5" stroke="#ea580c" stroke-width="1.8"/>
+<text x="135.0" y="90.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">NormalGnt[m]</text>
+<text x="135.0" y="109.0" text-anchor="middle" font-size="11" fill="#475569">address phase: grant taken</text>
+<rect x="330" y="60" width="200" height="60" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.8"/>
+<text x="430.0" y="83.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">PendValid[m]</text>
+<text x="430.0" y="102.0" text-anchor="middle" font-size="11" fill="#475569">reg: waiting for response</text>
+<rect x="330" y="150" width="200" height="60" rx="8" fill="#e0f2fe" stroke="#0284c7" stroke-width="1.8"/>
+<text x="430.0" y="173.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">PendSlave[m]</text>
+<text x="430.0" y="192.0" text-anchor="middle" font-size="11" fill="#475569">reg: which slave owes m</text>
+<line x1="230" y1="92" x2="328" y2="90" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="280" y="80" text-anchor="middle" font-size="11" fill="#334155">set</text>
+<line x1="230" y1="100" x2="328" y2="178" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="270" y="150" text-anchor="middle" font-size="11" fill="#334155">load slave index j</text>
+<rect x="40" y="260" width="190" height="54" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+<text x="135.0" y="280.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">SRvalid / SRdata</text>
+<text x="135.0" y="299.0" text-anchor="middle" font-size="11" fill="#475569">from all slaves 0..N-1</text>
+<path d="M330,250 L330,330 L430,310 L430,270 z" fill="#f1f5f9" stroke="#334155" stroke-width="1.8"/>
+<text x="378" y="295" text-anchor="middle" font-size="13" font-weight="bold" fill="#1e293b">mux</text>
+<line x1="230" y1="287" x2="328" y2="290" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<line x1="430" y1="187" x2="380" y2="250" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="555" y="225" text-anchor="middle" font-size="11" fill="#334155">select = PendSlave[m]</text>
+<rect x="560" y="250" width="230" height="54" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="1.8"/>
+<text x="675.0" y="270.0" text-anchor="middle" font-size="14" font-weight="bold" fill="#1e293b">MRvalid[m] / MRdata[m]</text>
+<text x="675.0" y="289.0" text-anchor="middle" font-size="11" fill="#475569">back to master m</text>
+<line x1="430" y1="290" x2="558" y2="280" stroke="#334155" stroke-width="1.6" marker-end="url(#arr)"/>
+<text x="480" y="322" text-anchor="middle" font-size="11" fill="#334155">MRvalid[m] = PendValid[m] &amp; SRvalid[PendSlave[m]]</text>
+<path d="M675,250 L675,90 L532,90" fill="none" stroke="#dc2626" stroke-width="1.6" marker-end="url(#arr)" stroke-dasharray="5,4"/>
+<text x="650" y="75" text-anchor="middle" font-size="11" fill="#dc2626">clear on response</text>
+<rect x="40" y="360" width="750" height="46" rx="8" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5"/>
+<text x="415" y="380" text-anchor="middle" font-size="12" fill="#713f12">Works because each master has at most ONE outstanding transaction.</text>
+<text x="415" y="397" text-anchor="middle" font-size="12" fill="#713f12">Multiple outstanding (e.g. prefetch buffer) would need a FIFO of pending slave IDs instead.</text>
+</svg>

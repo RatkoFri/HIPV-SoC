@@ -11,6 +11,10 @@ Adding a slave: `docs/ADDING_A_SLAVE.md`.
 
 ## Topology
 
+![obi_xbar topology](figures/xbar_topology.svg)
+
+Text version:
+
 ```
    MASTER_D (LSU) ─┐                                    ┌─> SLAVE_IMEM
                    ├─> decoder ─┐                       ├─> SLAVE_DMEM
@@ -58,6 +62,8 @@ Starvation is not a practical problem with fixed priority here because the LSU i
 most one transaction per instruction, so fetch always gets gaps to use.
 
 ## Response phase — the interesting part
+
+![Response routing](figures/xbar_response_routing.svg)
 
 OBI separates the address phase (`req`/`gnt`) from the response phase
 (`rvalid`/`rdata`), and responses carry no ID. So after granting, the fabric must
@@ -115,6 +121,8 @@ error grant; only the returned data (and, later, an `err` flag) differ.
 | `PendSlave[m]` | reg | master | *Which* slave owes master `m` the response — the crossbar's memory of the address phase, written at grant time. The response mux uses it: `MRvalid[m] = PendValid[m] & SRvalid[PendSlave[m]]`. Holds its last value after the response (only meaningful while `PendValid[m]` is set). |
 
 ### Worked trace: both masters read DMEM (contention)
+
+![Contention waveform](figures/xbar_contention_wave.svg)
 
 Captured from simulation (`ARB_FIXED`, 1-cycle slaves; values are bitmasks, bit 0 =
 `MASTER_D`, DMEM = slave 1 so bit 1 on slave vectors):

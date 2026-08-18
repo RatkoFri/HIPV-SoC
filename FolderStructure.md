@@ -41,11 +41,16 @@
      - `hazard/` — hazard detection, forwarding, stall/flush control
      - `regfile/` — register file
      - `hipv_core.sv` — core top-level, connects the stages above
-   - `rtl/mem/` — caches and on-chip memories (I$, D$, SRAM wrappers)
-   - `rtl/periph/` — peripherals (UART, GPIO, timer, interrupt controller, ...)
+   - `rtl/mem/` — RAM primitives and the unified dual-port memory with its OBI
+     wrapper (`obi_ram`); see `docs/MEMORY.md`
+   - `rtl/periph/` — peripherals: `obi_uart`/`obi_gpio`/`obi_timer` cores (from the
+     author's standalone repos) with `uart.sv`/`gpio.sv`/`timer.sv` SoC adapters;
+     see `rtl/periph/README.md`
+   - `rtl/stdlib/` — imported std-lib primitives (`register`, `cntr`) the peripheral
+     cores depend on
    - `rtl/interconnect/` — OBI crossbar (`obi_xbar`), address decoder and arbiter;
      see `docs/INTERCONNECT.md`
-   - `rtl/top/` — SoC top-level integration (`hipv_soc.sv`)
+   - `rtl/top/` — SoC top-level integration (`hipv_soc.sv`); see `docs/SOC.md`
 
 4. `tb/` — cocotb testbenches (Verilator as SIM), mirroring the `rtl/` hierarchy
    - `tb/common/` — shared Python: cocotb drivers, monitors, scoreboards, models, a common
@@ -66,6 +71,10 @@
    - `tests/asm/` — hand-written directed assembly tests
    - `tests/riscv-tests/` — official RISC-V ISA compliance tests (as a submodule, if used)
    - `tests/c/` — C test programs, if a toolchain/linker script is provided
+
+5b. `sw/` — bare-metal software: `bsp/` (crt0, drivers), `link.ld`, `rules.mk` and
+   `examples/`. Builds `$readmemh` images for the SoC's `INIT_FILE`; `make run` in an
+   example executes it on the SoC testbench. See `sw/README.md`.
 
 6. `requirements.txt` — Python dependencies for the verification flow (`cocotb`,
    `cocotb-bus`, `pytest`, `pytest-xdist` if used for parallel regression); Verilator itself

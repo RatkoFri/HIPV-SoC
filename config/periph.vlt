@@ -1,0 +1,11 @@
+`verilator_config
+// Peripheral IP (obi_uart, uart_system, obi_gpio, obi_timer) from the
+// author's standalone repositories, plus the std-lib primitives they
+// depend on. Their coding style predates the project standard, so lint
+// warnings for these files are waived and -Wall stays meaningful for
+// the rest of the tree.
+lint_off -file "*/rtl/periph/obi_uart.sv"
+lint_off -file "*/rtl/periph/uart_system.sv"
+lint_off -file "*/rtl/periph/obi_gpio.sv"
+lint_off -file "*/rtl/periph/obi_timer.sv"
+lint_off -file "*/rtl/stdlib/*.sv"

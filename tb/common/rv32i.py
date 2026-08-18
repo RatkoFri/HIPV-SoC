@@ -85,6 +85,22 @@ def sb(rs2, imm, rs1):
     return s_type(imm, rs2, rs1, 0b000)
 
 
+def andi(rd, rs1, imm):
+    return i_type(imm, rs1, 0b111, rd)
+
+
+def ori(rd, rs1, imm):
+    return i_type(imm, rs1, 0b110, rd)
+
+
+def slli(rd, rs1, sh):
+    return i_type(sh & 0x1F, rs1, 0b001, rd)
+
+
+def srli(rd, rs1, sh):
+    return i_type(sh & 0x1F, rs1, 0b101, rd)
+
+
 def beq(rs1, rs2, imm):
     return b_type(imm, rs2, rs1, 0b000)
 
@@ -116,3 +132,20 @@ def auipc(rd, imm20):
 def program(instrs, base=0):
     """Turn a list of instruction words into an imem dict."""
     return {base + 4 * i: w for i, w in enumerate(instrs)}
+
+
+def write_mem(instrs, path, words=None, pad=NOP):
+    """Write a $readmemh image for obi_ram's INIT_FILE parameter.
+
+    One 32-bit word per line, 8 hex digits, word 0 first. Same format as
+    scripts/mkmem.py, so testbenches and synthesis use identical images.
+    """
+    out = list(instrs)
+    if words is not None:
+        if len(out) > words:
+            raise ValueError(f"{len(out)} words do not fit in {words}")
+        out += [pad] * (words - len(out))
+    with open(path, "w") as f:
+        for w in out:
+            f.write(f"{w & 0xFFFFFFFF:08x}\n")
+    return len(out)
