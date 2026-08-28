@@ -1,0 +1,15 @@
+{
+  "project": "hipv-soc",
+  "board": "Nexys-A7-100T",
+  "top": "top",
+  "modules": [],
+  "params": {
+    "ram_addr_bits": 14
+  },
+  "description": "Digilent Nexys A7 100T (xc7a100t)",
+  "target": "nexys4ddr",
+  "partname": "xc7a100tcsg324-1",
+  "device": "artix7",
+  "ofl_board": "nexys_a7_100",
+  "xdc": "Nexys-A7-100T-Master.xdc"
+}

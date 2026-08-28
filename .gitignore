@@ -9,3 +9,6 @@ __pycache__/
 # synthesis / fpga build outputs
 fpga/build/
 syn/build/
+
+# generated artifacts
+build/

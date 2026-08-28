@@ -81,8 +81,10 @@
    is installed on the system/toolchain, not via pip.
 
 7. `fpga/` — FPGA implementation
-   - `fpga/constraints/` — pin/timing constraints (`.xdc`, `.sdc`)
-   - `fpga/scripts/` — build/bitstream generation scripts
+   - `fpga/anvil/` — Anvil (F4PGA) project sources for the Nexys A7-100T: board
+     wrapper `top.sv`, `config.json`, pin constraints. `scripts/anvil_flow.py`
+     flattens the design into a scratch project and runs the build.
+     See `docs/FPGA.md`.
 
 8. `syn/` — ASIC/logic synthesis scripts and constraints, kept separate from FPGA flow
 
