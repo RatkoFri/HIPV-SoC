@@ -12,9 +12,8 @@ void uart_init(uint32_t baud)
 {
     /* SPEED is the number of core clocks per bit. The receiver
      * oversamples by 16, so keep the divider a multiple of 16. */
-    uint32_t div = CPU_HZ / baud;
-    if (div < 16u) div = 16u;
-    UART_SPEED = div & ~15u;
+    uint32_t div = CPU_HZ / (baud >> 1);
+    UART_SPEED = div;
     UART_CONF = 0;
 }
 

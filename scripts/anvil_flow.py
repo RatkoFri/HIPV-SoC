@@ -29,11 +29,14 @@ Layout produced (default build/anvil-work/):
     *.xdc                    pin constraints
 
 Usage:
-    scripts/anvil_flow.py build            # flatten, convert, anvil build
-    scripts/anvil_flow.py program          # ... then flash the board
-    scripts/anvil_flow.py prepare          # stop after flattening
+    scripts/anvil_flow.py build              # flatten, convert, anvil build
+    scripts/anvil_flow.py program            # flash the board with the
+                                              # existing build (no rebuild)
+    scripts/anvil_flow.py program --rebuild  # flatten, convert, anvil
+                                              # build, then flash
+    scripts/anvil_flow.py prepare            # stop after flattening
     scripts/anvil_flow.py build --firmware sw/examples/hello/build/hello.hex
-    scripts/anvil_flow.py build --keep     # do not wipe first (debugging)
+    scripts/anvil_flow.py build --keep       # do not wipe first (debugging)
 """
 
 import argparse
@@ -218,7 +221,9 @@ def main():
     ap.add_argument("action", nargs="?", default="build",
                     choices=["prepare", "build", "program", "clean"],
                     help="prepare: flatten only; build: + anvil build; "
-                         "program: + anvil program; clean: remove the scratch dir")
+                         "program: flash the existing build (add --rebuild "
+                         "to flatten/convert/build first); "
+                         "clean: remove the scratch dir")
     ap.add_argument("--work", default=DEFAULT_WORK,
                     help="scratch project directory (wiped every run)")
     ap.add_argument("--firmware", default=DEFAULT_FIRMWARE,
@@ -227,6 +232,9 @@ def main():
     ap.add_argument("--anvil", help="path to anvil")
     ap.add_argument("--keep", action="store_true",
                     help="do not wipe the scratch dir first (debugging)")
+    ap.add_argument("--rebuild", action="store_true",
+                    help="for program: flatten/convert/anvil-build before "
+                         "flashing, instead of reusing the existing build")
     args = ap.parse_args()
 
     if args.action == "clean":
@@ -235,6 +243,21 @@ def main():
             print(f"removed {args.work}")
         else:
             print("nothing to clean")
+        return
+
+    anvil = args.anvil or find_tool("anvil", ["~/opt/anvil/anvil.py"])
+    if not anvil:
+        die("anvil not found on PATH. Install it or pass --anvil.")
+    cmd = [anvil] if os.access(anvil, os.X_OK) else [sys.executable, anvil]
+
+    if args.action == "program" and not args.rebuild:
+        if not os.path.isdir(args.work):
+            die(f"no existing build at {args.work}\n"
+                f"        run `scripts/anvil_flow.py build` first, or pass "
+                f"--rebuild")
+        print("\nanvil program (reusing existing build; pass --rebuild to "
+              "rebuild first)")
+        run(cmd + ["program"], cwd=args.work)
         return
 
     sv2v = args.sv2v or find_tool("sv2v", ["~/opt/sv2v/sv2v"])
@@ -248,11 +271,6 @@ def main():
               f"&& anvil build")
         return
 
-    anvil = args.anvil or find_tool("anvil", ["~/opt/anvil/anvil.py"])
-    if not anvil:
-        die("anvil not found on PATH. Install it or pass --anvil.")
-
-    cmd = [anvil] if os.access(anvil, os.X_OK) else [sys.executable, anvil]
     print("\nanvil build")
     run(cmd + ["build"], cwd=work)
 

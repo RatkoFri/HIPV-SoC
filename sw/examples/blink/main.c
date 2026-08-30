@@ -11,7 +11,7 @@
 /* Short delay so the simulation finishes quickly. Scale up for hardware:
  * DELAY_CYCLES = CPU_HZ / 4 gives a quarter-second step. */
 #ifndef DELAY_CYCLES
-#define DELAY_CYCLES 200u
+#define DELAY_CYCLES CPU_HZ  
 #endif
 
 int main(void)
@@ -19,19 +19,21 @@ int main(void)
     uart_init(BAUD);
     timer_start();
 
-    uart_puts("blink\n");
+    while (1) {
+     
+        uart_puts("blink\n");
 
-    for (int step = 0; step < STEPS; step++) {
-        uint32_t pattern = 1u << step;
-        gpio_write(pattern);
+        for (int step = 0; step < STEPS; step++) {
+            uint32_t pattern = 1u << step;
+            gpio_write(pattern);
 
-        /* report the pattern so the run is verifiable in simulation */
-        print_hex8((uint8_t)pattern);
-        uart_putc('\n');
+            /* report the pattern so the run is verifiable in simulation */
+            print_hex8((uint8_t)pattern);
+            uart_putc('\n');
 
-        delay_cycles(DELAY_CYCLES);
+            delay_cycles(DELAY_CYCLES);
+        }
     }
-
     gpio_write(0);
     uart_puts("done\n");
     return 0;

@@ -31,7 +31,7 @@ RAM_WORDS ?= 16384
 # Core clock and UART baud rate. Both are compiled into the program, and
 # the simulation needs the resulting divider to decode the serial stream.
 CPU_HZ ?= 50000000
-BAUD   ?= 1000000
+BAUD   ?= 19200
 # the BSP rounds the divider down to a multiple of 16 (receiver oversampling)
 UART_DIV := $(shell echo $$(( ($(CPU_HZ) / $(BAUD)) & ~15 )))
 

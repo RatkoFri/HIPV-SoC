@@ -11,9 +11,14 @@ around and the verified BRAM/synthesis results: **`docs/FPGA.md`**.
 
 Quick start:
 
-    make -C sw/examples/hello               # build a program
-    python3 scripts/anvil_flow.py build     # flatten, sv2v, synthesise
-    python3 scripts/anvil_flow.py program   # flash the board
+    make -C sw/examples/hello                                              # build a program
+    python3 scripts/anvil_flow.py build --firmware sw/examples/hello/build/hello.hex   # flatten, sv2v, synthesise
+    python3 scripts/anvil_flow.py program                                   # flash the existing build
+
+`--firmware` selects which `.hex` image is baked into the bitstream via
+`$readmemh` (default: `sw/examples/hello/build/hello.hex`). `program` on its
+own just flashes the board with the current `build/anvil-work/` output; pass
+`--rebuild` to flatten/convert/synthesise again before flashing.
 
 `anvil_flow.py` assembles everything into `build/anvil-work/`, which is **wiped on
 every run** — never edit anything in there.
