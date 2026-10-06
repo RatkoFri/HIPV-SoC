@@ -1,0 +1,30 @@
+HW1 check
+Task 1: Zba/Zbb
+sh1add  OK
+sh2add  OK
+sh3add  OK
+andn    OK
+orn     OK
+xnor    OK
+min     OK
+minu    OK
+max     OK
+maxu    OK
+clz     OK
+cpop    OK
+Task 1: bonus
+ctz     OK
+sext.b  OK
+sext.h  OK
+zext.h  OK
+orc.b   OK
+rev8    OK
+rol     OK
+ror     OK
+rori 7  OK
+Task 2: Zmmul
+mul     OK
+mulh    OK
+mulhsu  OK
+mulhu   OK
+done

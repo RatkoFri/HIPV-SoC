@@ -86,6 +86,8 @@ RTL = [
     "rtl/core/idu/idu.sv",
     "rtl/core/ieu/alu.sv",
     "rtl/core/ieu/branchcmp.sv",
+    "rtl/core/ieu/mulctrl.sv",
+    "rtl/core/ieu/mul.sv",
     "rtl/core/ieu/ieu.sv",
     "rtl/core/lsu/lsu.sv",
     "rtl/core/wbu/wbu.sv",

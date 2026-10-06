@@ -14,6 +14,8 @@ module alu (input  logic [31:0] A, B,
 
   import hipv_pkg::*;
 
+  // HW1 Task 1: add the Zba/Zbb operations. Look for hardware you can
+  // reuse (adder, comparator, logic ops) before adding new blocks.
   always_comb
     case (ALUControl)
       ALU_ADD:  Y = A + B;

@@ -13,6 +13,8 @@
 package hipv_pkg;
 
   // ALU operation encoding (ALUControl)
+  // HW1 Task 1: widen the codes and add the new operations here. Keep the
+  // values of the existing codes: tb/unit/idu and tb/unit/ieu use them.
   localparam logic [3:0] ALU_ADD  = 4'b0000;
   localparam logic [3:0] ALU_SUB  = 4'b0001;
   localparam logic [3:0] ALU_SLL  = 4'b0010;

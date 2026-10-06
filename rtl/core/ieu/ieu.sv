@@ -28,6 +28,7 @@ module ieu (input  logic        clk, reset,
             input  logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,
             input  logic [1:0]  ResultSrcD, ALUSrcAD,
             input  logic        ALUSrcBD,
+            // HW1 Task 1/2: wider ALUControlD, and the multiply control signal
             input  logic [3:0]  ALUControlD,
             // forwarding (from the hazard unit and later stages)
             input  logic [1:0]  ForwardAE, ForwardBE,
@@ -56,6 +57,8 @@ module ieu (input  logic        clk, reset,
   logic [31:0] RD1NextE, RD2NextE;
 
   // D/E handshake: accept when the stage is empty or being drained
+  // HW1 Task 2: a multiply must stay in E until its result is ready, and
+  // must not be offered to the Memory stage before that.
   assign ReadyE = ~ValidEReg | ReadyM;
   assign EnDE   = ValidD & ReadyE;
   assign ValidE = ValidEReg;
@@ -80,6 +83,8 @@ module ieu (input  logic        clk, reset,
   flopenr #(15) regsreg(.clk(clk), .reset(reset), .en(EnDE),
                         .D({Rs1D, Rs2D, RdD}), .Q({Rs1E, Rs2E, RdE}));
   flopenr #(3)  funct3reg(.clk(clk), .reset(reset), .en(EnDE), .D(Funct3D), .Q(Funct3E));
+  // HW1 Task 1/2: the control register carries ALUControl and the new
+  // multiply control bit; adjust its width
   flopenr #(14) ctrlreg(.clk(clk), .reset(reset), .en(EnDE),
                         .D({RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ResultSrcD,
                             ALUSrcAD, ALUSrcBD, ALUControlD}),
@@ -96,6 +101,10 @@ module ieu (input  logic        clk, reset,
 
   // ALU and branch comparator (comparator uses the forwarded operands)
   alu alu(.A(SrcAE), .B(SrcBE), .ALUControl(ALUControlE), .Y(ALUResultE));
+
+  // HW1 Task 2: instantiate mul here. Decide when it may start (see the
+  // PCSrcE comment in the header), and send its result on to the Memory
+  // stage so that forwarding keeps working.
   branchcmp bcmp(.A(FwdAE), .B(WriteDataE), .Funct3E(Funct3E), .TakenE(TakenE));
 
   // branch/jump target: PC + imm for branch/jal, ALU (rs1 + imm) for jalr

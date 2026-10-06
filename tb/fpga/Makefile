@@ -28,6 +28,8 @@ VERILOG_SOURCES = $(TOPLEVEL_DIR)/config/periph.vlt \
                   $(TOPLEVEL_DIR)/rtl/core/idu/idu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/ieu/alu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/ieu/branchcmp.sv \
+                  $(TOPLEVEL_DIR)/rtl/core/ieu/mulctrl.sv \
+                  $(TOPLEVEL_DIR)/rtl/core/ieu/mul.sv \
                   $(TOPLEVEL_DIR)/rtl/core/ieu/ieu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/lsu/lsu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/wbu/wbu.sv \

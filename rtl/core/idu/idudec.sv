@@ -15,6 +15,8 @@
 
 module idudec (input  logic [6:0] OpD,
                input  logic [2:0] Funct3D,
+               // HW1 Task 1: funct7[5] alone cannot tell the new instructions
+               // apart. Which instruction bits does the decoder need?
                input  logic       Funct7b5D,
                output logic       RegWriteD,
                output logic [2:0] ImmSrcD,
@@ -22,6 +24,7 @@ module idudec (input  logic [6:0] OpD,
                output logic       ALUSrcBD,
                output logic       MemWriteD,
                output logic [1:0] ResultSrcD,
+               // HW1 Task 2: a control output that marks a multiply
                output logic       BranchD, JumpD, JalrD,
                output logic [3:0] ALUControlD);
 
@@ -35,6 +38,8 @@ module idudec (input  logic [6:0] OpD,
           BranchD, JumpD, JalrD, ALUOpD} = ControlsD;
 
   // main decoder
+  // HW1 Task 2: mul* must reach the multiplier; div/divu/rem/remu (also
+  // OP_RTYPE) must not write a register.
   //                        RegWrite ImmSrc SrcA       SrcB  MemWrite ResultSrc   Branch Jump  Jalr  ALUOp
   always_comb
     case (OpD)
@@ -54,6 +59,8 @@ module idudec (input  logic [6:0] OpD,
   assign RtypeSubD = Funct7b5D & OpD[5];
 
   // ALU decoder
+  // HW1 Task 1: decode the Zba/Zbb instructions here, without changing
+  // what the RV32I encodings that share their funct3 decode to.
   always_comb
     if (ALUOpD == 2'b10)
       case (Funct3D)

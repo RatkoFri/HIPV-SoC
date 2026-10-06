@@ -9,6 +9,7 @@ Pedagogical 5-stage pipelined RV32I core and SoC, developed for lectures.
 - Core documentation: `docs/CORE.md` (overview) and per-stage `docs/{IFU,IDU,IEU,LSU,WBU,HAZARD}.md`
 - Standard modules: `rtl/generic/README.md`
 - Learning cocotb: `docs/CocotbTutorial.md` (runnable examples in `docs/cocotb_tutorial/`)
+- Homework 1 (Zba/Zbb subset and Zmmul): `docs/LectureNotes/HW1.md`
 
 ## Status
 

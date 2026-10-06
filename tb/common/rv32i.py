@@ -1,4 +1,5 @@
-# RV32I instruction encoders for HIPV testbenches.
+# RV32I instruction encoders for HIPV testbenches, plus the Zba/Zbb and
+# Zmmul instructions used by homework 1 (docs/LectureNotes/HW1.md).
 
 NOP = 0x00000013  # addi x0, x0, 0
 
@@ -129,6 +130,26 @@ def auipc(rd, imm20):
     return u_type(imm20, rd, op=0b0010111)
 
 
+def xor(rd, rs1, rs2):
+    return r_type(0x00, rs2, rs1, 0b100, rd)
+
+
+def sll(rd, rs1, rs2):
+    return r_type(0x00, rs2, rs1, 0b001, rd)
+
+
+def srl(rd, rs1, rs2):
+    return r_type(0x00, rs2, rs1, 0b101, rd)
+
+
+def sra(rd, rs1, rs2):
+    return r_type(0x20, rs2, rs1, 0b101, rd)
+
+
+def srai(rd, rs1, sh):
+    return i_type(0x400 | (sh & 0x1F), rs1, 0b101, rd)
+
+
 def li(rd, value):
     """Load a 32-bit constant: lui + addi (two words, returned as a list)."""
     value = m32(value)
@@ -137,6 +158,128 @@ def li(rd, value):
         lo -= 0x1000
     hi = m32(value - lo) >> 12
     return [lui(rd, hi), addi(rd, rd, lo)]
+
+
+# Zba (address generation) ---------------------------------------------
+
+def sh1add(rd, rs1, rs2):
+    return r_type(0x10, rs2, rs1, 0b010, rd)
+
+
+def sh2add(rd, rs1, rs2):
+    return r_type(0x10, rs2, rs1, 0b100, rd)
+
+
+def sh3add(rd, rs1, rs2):
+    return r_type(0x10, rs2, rs1, 0b110, rd)
+
+
+# Zbb (basic bit manipulation) -----------------------------------------
+
+def andn(rd, rs1, rs2):
+    return r_type(0x20, rs2, rs1, 0b111, rd)
+
+
+def orn(rd, rs1, rs2):
+    return r_type(0x20, rs2, rs1, 0b110, rd)
+
+
+def xnor(rd, rs1, rs2):
+    return r_type(0x20, rs2, rs1, 0b100, rd)
+
+
+def min_(rd, rs1, rs2):
+    return r_type(0x05, rs2, rs1, 0b100, rd)
+
+
+def minu(rd, rs1, rs2):
+    return r_type(0x05, rs2, rs1, 0b101, rd)
+
+
+def max_(rd, rs1, rs2):
+    return r_type(0x05, rs2, rs1, 0b110, rd)
+
+
+def maxu(rd, rs1, rs2):
+    return r_type(0x05, rs2, rs1, 0b111, rd)
+
+
+def clz(rd, rs1):
+    return i_type(0x600, rs1, 0b001, rd)
+
+
+def ctz(rd, rs1):
+    return i_type(0x601, rs1, 0b001, rd)
+
+
+def cpop(rd, rs1):
+    return i_type(0x602, rs1, 0b001, rd)
+
+
+def sext_b(rd, rs1):
+    return i_type(0x604, rs1, 0b001, rd)
+
+
+def sext_h(rd, rs1):
+    return i_type(0x605, rs1, 0b001, rd)
+
+
+def zext_h(rd, rs1):
+    return r_type(0x04, 0, rs1, 0b100, rd)
+
+
+def rol(rd, rs1, rs2):
+    return r_type(0x30, rs2, rs1, 0b001, rd)
+
+
+def ror(rd, rs1, rs2):
+    return r_type(0x30, rs2, rs1, 0b101, rd)
+
+
+def rori(rd, rs1, sh):
+    return i_type(0x600 | (sh & 0x1F), rs1, 0b101, rd)
+
+
+def orc_b(rd, rs1):
+    return i_type(0x287, rs1, 0b101, rd)
+
+
+def rev8(rd, rs1):
+    return i_type(0x698, rs1, 0b101, rd)
+
+
+# Zmmul (multiply) and the M-extension divides -------------------------
+
+def mul(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b000, rd)
+
+
+def mulh(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b001, rd)
+
+
+def mulhsu(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b010, rd)
+
+
+def mulhu(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b011, rd)
+
+
+def div(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b100, rd)
+
+
+def divu(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b101, rd)
+
+
+def rem(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b110, rd)
+
+
+def remu(rd, rs1, rs2):
+    return r_type(0x01, rs2, rs1, 0b111, rd)
 
 
 def program(instrs, base=0):

@@ -12,3 +12,6 @@ syn/build/
 
 # generated artifacts
 build/
+
+# instructor-only material (homework reference solutions), never pushed
+solutions/

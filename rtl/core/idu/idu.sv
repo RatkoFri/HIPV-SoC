@@ -35,6 +35,7 @@ module idu (input  logic        clk, reset,
             output logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,
             output logic [1:0]  ResultSrcD, ALUSrcAD,
             output logic        ALUSrcBD,
+            // HW1 Task 1/2: wider ALUControlD, and the multiply control signal
             output logic [3:0]  ALUControlD);
 
   logic [31:0] InstrD;
@@ -65,6 +66,7 @@ module idu (input  logic        clk, reset,
   assign Funct3D = InstrD[14:12];
 
   // control decoder
+  // HW1 Task 1: pass the instruction bits the extended decoder needs
   idudec dec(.OpD(InstrD[6:0]), .Funct3D(Funct3D), .Funct7b5D(InstrD[30]),
              .RegWriteD(RegWriteD), .ImmSrcD(ImmSrcD), .ALUSrcAD(ALUSrcAD),
              .ALUSrcBD(ALUSrcBD), .MemWriteD(MemWriteD), .ResultSrcD(ResultSrcD),
