@@ -129,6 +129,16 @@ def auipc(rd, imm20):
     return u_type(imm20, rd, op=0b0010111)
 
 
+def li(rd, value):
+    """Load a 32-bit constant: lui + addi (two words, returned as a list)."""
+    value = m32(value)
+    lo = value & 0xFFF
+    if lo & 0x800:
+        lo -= 0x1000
+    hi = m32(value - lo) >> 12
+    return [lui(rd, hi), addi(rd, rd, lo)]
+
+
 def program(instrs, base=0):
     """Turn a list of instruction words into an imem dict."""
     return {base + 4 * i: w for i, w in enumerate(instrs)}

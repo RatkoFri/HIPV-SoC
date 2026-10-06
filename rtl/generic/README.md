@@ -36,6 +36,7 @@ updated whenever a module is added or a new user of a module appears.
 | `mux3`    | `rtl/core/ieu/ieu.sv`   | `fwdamux`, `fwdbmux` | Forwarding muxes (RF / ResultW / ALUResultM) |
 | `mux3`    | `rtl/core/ieu/ieu.sv`   | `srcamux`     | ALU operand A (rs1 / PC / zero)  |
 | `mux2`    | `rtl/core/ieu/ieu.sv`   | `srcbmux`     | ALU operand B (rs2 / immediate)  |
+| `mux2`    | `rtl/core/ieu/ieu.sv`   | `rd1mux`, `rd2mux` | D/E operand load vs. refresh with forwarded value while E stalls |
 | `mux2`    | `rtl/core/ieu/ieu.sv`   | `targetmux`   | Target select (PC+imm / jalr)    |
 | `adder`   | `rtl/core/ieu/ieu.sv`   | `targetadd`   | Branch/jal target `PCE + ImmExtE` |
 | `flopenr` | `rtl/core/lsu/lsu.sv`   | `alureg`, `wdreg`, `pcplus4reg`, `rdreg`, `funct3reg`, `ctrlreg` | E/M pipeline registers |

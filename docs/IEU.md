@@ -72,6 +72,10 @@ a branch must not fire until it can actually retire.
 ## Handshake
 
 Same elastic pattern as F/D: `ReadyE = ~ValidEReg | ReadyM`, load on `ValidD & ReadyE`.
+While the stage holds an instruction (`HoldE = ValidEReg & ~ReadyE`), the operand
+registers `RD1E`/`RD2E` are refreshed with the forwarded values, so a producer that
+retires during the stall is not lost (see "Forwarding while Execute stalls" in
+`docs/HAZARD.md`).
 The E stage is never flushed: the redirect kills instructions *behind* the branch (in F
 and D), while the branch itself continues into the Memory stage to retire.
 

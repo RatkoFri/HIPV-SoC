@@ -10,13 +10,17 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 
 from obi import obi_slave
-from rv32i import (NOP, m32, program, addi, add, sub, lw, lh, lhu, lb, lbu,
+from rv32i import (NOP, m32, program, li, addi, add, sub, lw, lh, lhu, lb, lbu,
                    sw, sh, sb, beq, bne, blt, jal, jalr, lui, auipc)
 
 SPIN = jal(0, 0)  # jump-to-self
 
 
-async def run_program(dut, imem, dmem, cycles, gnt_delay=0, rvalid_delay=1):
+async def run_program(dut, imem, dmem, cycles, gnt_delay=0, rvalid_delay=1,
+                      dmem_delay=None):
+    """Run a program; dmem_delay = (gnt, rvalid) gives the data memory its
+    own timing, otherwise both memories use gnt_delay/rvalid_delay."""
+    dgnt, drvalid = dmem_delay if dmem_delay else (gnt_delay, rvalid_delay)
     cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
     cocotb.start_soon(obi_slave(
         dut.clk, imem, dut.ObiIReq, dut.ObiIGnt, dut.ObiIAddr,
@@ -25,7 +29,7 @@ async def run_program(dut, imem, dmem, cycles, gnt_delay=0, rvalid_delay=1):
     cocotb.start_soon(obi_slave(
         dut.clk, dmem, dut.ObiDReq, dut.ObiDGnt, dut.ObiDAddr,
         dut.ObiDRvalid, dut.ObiDRdata, we=dut.ObiDWe, be=dut.ObiDBe,
-        wdata=dut.ObiDWdata, gnt_delay=gnt_delay, rvalid_delay=rvalid_delay))
+        wdata=dut.ObiDWdata, gnt_delay=dgnt, rvalid_delay=drvalid))
     dut.reset.value = 1
     for _ in range(2):
         await RisingEdge(dut.clk)
@@ -181,3 +185,29 @@ async def test_slow_memories(dut):
     ])
     await run_program(dut, imem, dmem, 900, gnt_delay=1, rvalid_delay=2)
     assert dmem.get(0) == 6, f"mem[0]={dmem.get(0)}"
+
+
+@cocotb.test()
+@cocotb.parametrize(dmem_delay=[(0, 1), (1, 2), (3, 4), (5, 6)])
+async def test_forward_while_stalled(dut, dmem_delay):
+    """A forwarded operand survives its producer retiring while E stalls.
+
+    The slow load makes the next three instructions bunch up. Then the
+    producer (addi) reaches W while the store holds M, so the add waits
+    in E; the producer retires before the add leaves E. Without the
+    operand refresh in the IEU, the add would use the stale x1 it read
+    in Decode.
+    """
+    value = 0x100 + 16 * dmem_delay[0] + dmem_delay[1]
+    dmem = {0x100: 5}
+    imem = program(li(1, 0x5A5) + li(10, 0x100) + [
+        lw(5, 0, 10),               # slow load: the next instructions bunch up
+        addi(1, 0, value),          # producer
+        sw(5, 4, 10),               # slow store: holds M while addi retires
+        add(3, 1, 0),               # consumer, needs the forwarded x1
+        sw(3, 8, 10),
+        SPIN,
+    ])
+    await run_program(dut, imem, dmem, 500, dmem_delay=dmem_delay)
+    assert dmem.get(0x108) == value, \
+        f"add after a stalled store: mem[0x108]={dmem.get(0x108)}, expected {value}"

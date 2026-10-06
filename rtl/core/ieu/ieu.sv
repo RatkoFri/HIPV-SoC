@@ -52,7 +52,8 @@ module ieu (input  logic        clk, reset,
   logic [1:0]  ALUSrcAE;
   logic        ALUSrcBE;
   logic [3:0]  ALUControlE;
-  logic        EnDE, ValidEReg;
+  logic        EnDE, ValidEReg, HoldE;
+  logic [31:0] RD1NextE, RD2NextE;
 
   // D/E handshake: accept when the stage is empty or being drained
   assign ReadyE = ~ValidEReg | ReadyM;
@@ -65,8 +66,14 @@ module ieu (input  logic        clk, reset,
     else if (ReadyE) ValidEReg <= ValidD;
 
   // D/E pipeline registers
-  flopenr #(32) rd1reg(.clk(clk), .reset(reset), .en(EnDE), .D(RD1D), .Q(RD1E));
-  flopenr #(32) rd2reg(.clk(clk), .reset(reset), .en(EnDE), .D(RD2D), .Q(RD2E));
+  // While an instruction waits in E, refresh its register operands with
+  // the forwarded values: the producer can retire from W (and stop being
+  // forwarded) before this instruction leaves E.
+  assign HoldE = ValidEReg & ~ReadyE;
+  mux2 #(32) rd1mux(.D0(FwdAE), .D1(RD1D), .S(EnDE), .Y(RD1NextE));
+  mux2 #(32) rd2mux(.D0(WriteDataE), .D1(RD2D), .S(EnDE), .Y(RD2NextE));
+  flopenr #(32) rd1reg(.clk(clk), .reset(reset), .en(EnDE | HoldE), .D(RD1NextE), .Q(RD1E));
+  flopenr #(32) rd2reg(.clk(clk), .reset(reset), .en(EnDE | HoldE), .D(RD2NextE), .Q(RD2E));
   flopenr #(32) immreg(.clk(clk), .reset(reset), .en(EnDE), .D(ImmExtD), .Q(ImmExtE));
   flopenr #(32) pcreg(.clk(clk), .reset(reset), .en(EnDE), .D(PCD), .Q(PCE));
   flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnDE), .D(PCPlus4D), .Q(PCPlus4E));
