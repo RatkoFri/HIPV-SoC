@@ -535,10 +535,6 @@ make run              # compared with expected.txt
 make run REF=1        # reference against itself: checks the program on the unmodified core
 ```
 
-The Makefile works around the open UART bug in [KnownBugs.md](../../KnownBugs.md):
-the BSP's baud divider does not match what the testbench assumes. Don't change the BSP
-for this homework.
-
 ### The benchmark: `sw/hw1/bench`
 
 `make run` in `sw/hw1/bench` prints timer ticks per operation for each new instruction,

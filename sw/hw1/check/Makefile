@@ -24,8 +24,3 @@ endif
 ifeq ($(REF),1)
 CFLAGS += -DHW1_REF
 endif
-
-# BUG-UART (KnownBugs.md): the BSP programs CPU_HZ / (BAUD / 2) clock
-# cycles per bit, not the CPU_HZ / BAUD that rules.mk assumes, so tell
-# the testbench the divider the program really uses.
-UART_DIV := $(shell echo $$(( $(CPU_HZ) / ($(BAUD) / 2) )))
