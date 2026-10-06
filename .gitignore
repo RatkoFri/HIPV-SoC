@@ -6,9 +6,12 @@ results.xml
 __pycache__/
 *.pyc
 
+
 # synthesis / fpga build outputs
 fpga/build/
 syn/build/
 
 # generated artifacts
 build/
+solutions/
+sw/hw1/
