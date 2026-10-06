@@ -49,8 +49,8 @@ If an example has an `expected.txt`, `make run` compares the captured UART outpu
 against it, so running an example is a regression test. Without one it just prints what
 the program produced.
 
-Useful variables: `CPU_HZ` (default 100 MHz, the Nexys A7 board clock; used for baud
-maths and delays, must match the real clock), `BAUD` (19200),
+Useful variables: `CPU_HZ` (default 50 MHz, the SoC clock; used for baud maths and
+delays, must match the real clock), `BAUD` (19200),
 `OPT` (`-Os`), `RAM_ADDR_WIDTH` (14 → 64 KiB, must match the SoC), `RUN_CYCLES`.
 
 ## Memory layout

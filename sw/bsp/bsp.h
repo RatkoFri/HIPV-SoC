@@ -12,10 +12,10 @@
 #include "hipv.h"
 
 /* Core clock frequency in Hz, used to convert baud rates and delays.
- * The default is the Nexys A7 board oscillator (100 MHz), which drives
- * the SoC directly. Override at build time with -DCPU_HZ=... */
+ * The default is the 50 MHz SoC clock the XDC constrains. Override at
+ * build time with -DCPU_HZ=... */
 #ifndef CPU_HZ
-#define CPU_HZ 100000000u
+#define CPU_HZ 50000000u
 #endif
 
 /* ---- UART -------------------------------------------------------- */

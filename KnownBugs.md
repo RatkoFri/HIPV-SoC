@@ -81,16 +81,13 @@ Any investigation so far — suspected cause, related modules, links to a
 testbench run or `docs/*.md` section. Omit while unknown.
 
 **Resolution**
-Fixed by the commit "Fix UART baud rate: run software at the real 100 MHz board
-clock". Root cause: the Nexys A7 oscillator (100 MHz) drives the SoC directly, but
-`CPU_HZ`, the XDC constraint and the docs all assumed 50 MHz. The hardware is
-consistent with itself: TX uses `SPEED` clock cycles per bit, and RX samples at
-`SPEED >> 4` (16× oversampling). So the original `CPU_HZ / baud` (multiple of 16)
-was right, and `CPU_HZ / (baud >> 1)` only compensated for the wrong clock value,
-which broke the simulated UART. Now `CPU_HZ` defaults to 100 MHz (`sw/rules.mk`,
-`bsp.h`), the BSP is back to `CPU_HZ / baud` rounded to a multiple of 16, the XDC
-constrains 10 ns, and `tb/fpga` clocks at 100 MHz. See "Clock frequency" in
-`docs/FPGA.md`.
+The UART hardware is consistent with itself: TX uses `SPEED` clock cycles per bit,
+and RX samples at `SPEED >> 4` (16× oversampling). So `SPEED = CPU_HZ / baud`
+(rounded down to a multiple of 16) is the right formula. `CPU_HZ / (baud >> 1)`
+doubled the divider, so the BSP and the testbench (which decodes at `CPU_HZ / BAUD`)
+disagreed by a factor of two. The BSP is back to `CPU_HZ / baud`. `CPU_HZ`, the XDC
+constraint and `tb/fpga` all use the 50 MHz SoC clock (a 100 MHz configuration did
+not meet timing). See "Clock frequency" in `docs/FPGA.md`.
 
 ---
 

@@ -4,12 +4,11 @@
 # (xdc/Nexys-A7-100T-Master.xdc); only the pins this design uses are
 # enabled here.
 
-## Clock: the on-board 100 MHz oscillator at E3 drives the SoC directly,
-## so the constraint is its real period, 10.00 ns. Software must be built
-## with the same frequency (CPU_HZ=100000000, the default in sw/rules.mk).
+## Clock: 50.00 MHz (20.00 ns) SoC clock. Software must be built with the
+## same frequency (CPU_HZ=50000000, the default in sw/rules.mk).
 set_property PACKAGE_PIN E3  [get_ports {clk}]
 set_property IOSTANDARD LVCMOS33 [get_ports {clk}]
-create_clock -period 10.00 -name sys_clk [get_ports {clk}]
+create_clock -period 20.00 -name sys_clk [get_ports {clk}]
 
 ## Reset: CPU_RESETN push button (active low)
 set_property PACKAGE_PIN C12 [get_ports {cpu_resetn}]
