@@ -78,7 +78,7 @@ into the bitstream, exactly as `docs/MEMORY.md` intends.
 
 | Concern | What it does |
 |---------|--------------|
-| Clock | The board clock drives the SoC directly. The XDC constrains it at **50.00 MHz** (20.00 ns). See the warning below. |
+| Clock | The 100 MHz board oscillator drives the SoC directly. The XDC constrains it at its real period, **10.00 ns**. See "Clock frequency" below. |
 | Reset | `CPU_RESETN` is active-low; two flops synchronise it into the SoC clock domain and it is inverted to the SoC's active-high `reset`. |
 | Power-on | A 4-bit counter holds reset for 15 SoC clocks after configuration, so the SoC starts cleanly even if the button is never pressed. |
 | GPIO | 8 slide switches → `GpioIn`, 8 LEDs ← `GpioOut`. |
@@ -91,12 +91,22 @@ conversion path.
 Pin assignments in `fpga/anvil/Nexys-A7-100T-Master.xdc` are taken from the Digilent
 master XDC shipped with Anvil.
 
-> **Clock frequency, worth a deliberate decision.** The Nexys A7 on-board oscillator
-> at E3 is **100 MHz**, but the constraint declares 50 MHz. Static timing analysis
-> therefore checks a 20 ns period that the pin does not actually receive, and hardware
-> would run at twice the analysed frequency. This is correct only if a 50 MHz clock is
-> genuinely supplied on that pin. Otherwise either change the period to `10.00` and
-> build software with `CPU_HZ=100000000`, or bring the clock down before the pin.
+> **Clock frequency.** The Nexys A7 oscillator at E3 runs at **100 MHz** and drives the
+> SoC directly. Three things must agree on that number:
+>
+> - the XDC constraint (`create_clock -period 10.00`), so timing analysis checks the
+>   frequency the chip really runs at;
+> - `CPU_HZ` in `sw/rules.mk` (default `100000000`), from which the BSP computes the UART
+>   divider and delays;
+> - the clock in the `tb/fpga` testbench (10 ns).
+>
+> Earlier versions declared 50 MHz everywhere while the board ran at 100 MHz. The UART
+> only worked because of a factor-of-two hack in the BSP divider, which broke simulation
+> (BUG-UART in `KnownBugs.md`).
+>
+> If 100 MHz does not meet timing, run the SoC slower: divide the board clock (e.g. with
+> an MMCM/PLL in `top.sv`), set the XDC to the divided period, and build software with
+> the matching `CPU_HZ`. All three must change together.
 
 ## Build flow
 
@@ -150,11 +160,14 @@ testbench, and both are easy to trip over:
 
 ## Things to expect on first bring-up
 
-- **Baud rate.** The BSP computes the UART divider from `CPU_HZ`. The SoC runs at
-  50 MHz here, so build software with `make CPU_HZ=50000000` (the default) — not
-  100 MHz, or every character will be garbled.
-- **Timing closure.** At 50 MHz there should be generous margin; the likely critical
-  path if you push higher is the crossbar's combinational grant path into the RAM.
+- **Baud rate.** The BSP computes the UART divider as `CPU_HZ / BAUD`, rounded down to
+  a multiple of 16 (the receiver oversamples ×16). The defaults (`CPU_HZ=100000000`,
+  `BAUD=19200`) give 5200 clock cycles per bit, 0.15 % off 19200 baud. Set the terminal
+  to 19200 8N1. A `CPU_HZ` that doesn't match the real clock garbles every character.
+- **Timing closure.** Check the timing report against the 10 ns constraint. The design
+  was first written for 50 MHz, so 100 MHz has not been confirmed to close. The likely
+  critical path is the crossbar's combinational grant path into the RAM. If it fails,
+  slow the clock as described under "Clock frequency".
 - **Reset button.** `CPU_RESETN` is active-low, and is the red button, not one of
   the coloured push buttons.
 - **BRAM budget.** 64 KiB of unified memory is 16 RAMB36 of 135.

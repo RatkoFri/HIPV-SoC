@@ -4,8 +4,8 @@
 // Purpose: FPGA wrapper for the HIPV SoC on the Digilent Nexys A7-100T,
 //          built with Anvil (F4PGA). Board plumbing only — no design
 //          logic lives here:
-//            - the board clock drives the SoC directly (50 MHz, see the
-//              clock constraint in the XDC)
+//            - the 100 MHz board clock drives the SoC directly (see the
+//              clock constraint in the XDC; software uses CPU_HZ)
 //            - converts the active-low CPU_RESETN button to the SoC's
 //              synchronous active-high reset, through a synchroniser,
 //              plus a power-on reset so the SoC starts without the
@@ -23,7 +23,7 @@
 
 module top #(parameter RAM_ADDR_WIDTH = 14,          // 2^14 words = 64 KiB
              parameter INIT_FILE      = "firmware.hex")
-           (input  logic       clk,          // SoC clock, 50 MHz (see XDC)
+           (input  logic       clk,          // SoC clock, 100 MHz (see XDC)
             input  logic       cpu_resetn,   // active-low push button
             output logic       uart_tx,      // to the USB-serial RXD
             input  logic       uart_rx,      // from the USB-serial TXD

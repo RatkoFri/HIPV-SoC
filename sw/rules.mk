@@ -30,7 +30,9 @@ RAM_WORDS ?= 16384
 
 # Core clock and UART baud rate. Both are compiled into the program, and
 # the simulation needs the resulting divider to decode the serial stream.
-CPU_HZ ?= 50000000
+# CPU_HZ must be the frequency the SoC really runs at: on the Nexys A7
+# that is the 100 MHz board oscillator (see docs/FPGA.md).
+CPU_HZ ?= 100000000
 BAUD   ?= 19200
 # the BSP rounds the divider down to a multiple of 16 (receiver oversampling)
 UART_DIV := $(shell echo $$(( ($(CPU_HZ) / $(BAUD)) & ~15 )))
@@ -101,7 +103,8 @@ dump: $(BUILD)/$(PROG).lst
 
 # Run this program on the SoC testbench and print what it sends over the
 # UART. EXPECT="..." makes the run assert on the exact output.
-RUN_CYCLES ?= 300000
+# at 19200 baud and 100 MHz one character takes 52000 cycles
+RUN_CYCLES ?= 4000000
 # a golden file next to the example turns `make run` into a regression
 EXPECT_FILE ?= $(wildcard expected.txt)
 run: $(BUILD)/$(PROG).hex

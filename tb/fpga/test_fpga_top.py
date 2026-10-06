@@ -8,7 +8,7 @@
 #   - the UART reaches the right pin
 #
 # `clk` drives the SoC directly (no divider), so a UART bit lasts
-# BAUD_LIMIT clk cycles. The testbench clocks it at 20 ns = 50 MHz, the
+# BAUD_LIMIT clk cycles. The testbench clocks it at 10 ns = 100 MHz, the
 # frequency the XDC constrains.
 
 import os
@@ -39,7 +39,7 @@ async def start(dut, hold_reset=True, restart=True):
     restart:    pulse the button first, so the program runs again from
                 the beginning (needed by any test that observes boot).
     """
-    cocotb.start_soon(Clock(dut.clk, 20, unit="ns").start())   # 50 MHz
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())   # 100 MHz
 
     dut.uart_rx.value = 1
     dut.sw.value = 0

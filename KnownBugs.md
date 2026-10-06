@@ -10,6 +10,7 @@ the commit that fixed it.
 | ID | Title | Component | Severity | Status |
 |----|-------|-----------|----------|--------|
 | BUG-001 | *(example — remove once real bugs are added)* | core/ifu | Low | Open |
+| BUG-UART | UART baud divider: software and hardware disagree on the clock | sw/bsp, fpga | High | Fixed |
 
 **Component:** `core/<stage>`, `interconnect`, `mem`, `periph/<name>`, `sw`,
 `fpga`, `tb`, or `docs`.
@@ -58,7 +59,7 @@ Fixed in <commit hash / PR>. Brief note on the actual fix.
 
 - **Component:** < sw/bsp, rtl/peripherals/obi_uart>
 - **Severity:** <Critical |  Low>
-- **Status:** <Open>
+- **Status:** Fixed
 - **Reported by:** Ratko, 30. 8. 2027
 >
 
@@ -79,8 +80,17 @@ How to avoid hitting it in the meantime, if any. Omit if none.
 Any investigation so far — suspected cause, related modules, links to a
 testbench run or `docs/*.md` section. Omit while unknown.
 
-**Resolution** *(fill in when Status becomes Fixed)*
-Fixed in <commit hash / PR>. Brief note on the actual fix.
+**Resolution**
+Fixed by the commit "Fix UART baud rate: run software at the real 100 MHz board
+clock". Root cause: the Nexys A7 oscillator (100 MHz) drives the SoC directly, but
+`CPU_HZ`, the XDC constraint and the docs all assumed 50 MHz. The hardware is
+consistent with itself: TX uses `SPEED` clock cycles per bit, and RX samples at
+`SPEED >> 4` (16× oversampling). So the original `CPU_HZ / baud` (multiple of 16)
+was right, and `CPU_HZ / (baud >> 1)` only compensated for the wrong clock value,
+which broke the simulated UART. Now `CPU_HZ` defaults to 100 MHz (`sw/rules.mk`,
+`bsp.h`), the BSP is back to `CPU_HZ / baud` rounded to a multiple of 16, the XDC
+constrains 10 ns, and `tb/fpga` clocks at 100 MHz. See "Clock frequency" in
+`docs/FPGA.md`.
 
 ---
 
