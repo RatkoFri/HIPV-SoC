@@ -47,81 +47,59 @@ module lsu (input  logic        clk, reset,
             input  logic        ObiRvalidM,
             input  logic [31:0] ObiRdataM);
 
-  import hipv_pkg::*;
+  // 0. import hipv_pkg::* (RESULT_MEM)
+  //    Internal signals:
+  //      ValidMReg, EnEM, MemOpM, DoneM, WaitRespM, CaptureM
+  //      RegWriteMReg, MemWriteM, Funct3M [2:0], AddrLsbM [1:0]
+  //      WriteDataM, ReadRawM, ReadShiftM [31:0]
 
-  logic        ValidMReg, EnEM, MemOpM, DoneM, WaitRespM, CaptureM;
-  logic        RegWriteMReg, MemWriteM;
-  logic [2:0]  Funct3M;
-  logic [31:0] WriteDataM, ReadRawM, ReadShiftM;
-  logic [1:0]  AddrLsbM;
+  // 1. E/M handshake: a memory instruction holds the stage until done
+  //    - MemOpM = store (MemWriteM) or load (ResultSrcM == RESULT_MEM)
+  //    - ValidM = ValidMReg & (not a memory op, or DoneM)
+  //    - ReadyM = stage empty, or (ValidM & ReadyW)
+  //    - EnEM   = ValidE & ReadyM
 
-  // E/M handshake: a memory instruction holds the stage until done
-  assign MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);
-  assign ValidM = ValidMReg & (~MemOpM | DoneM);
-  assign ReadyM = ~ValidMReg | (ValidM & ReadyW);
-  assign EnEM   = ValidE & ReadyM;
+  // 2. E/M valid bit ValidMReg (always_ff): reset 0, else if ReadyM take ValidE
 
-  // E/M valid bit
-  always_ff @(posedge clk)
-    if (reset) ValidMReg <= 1'b0;
-    else if (ReadyM) ValidMReg <= ValidE;
+  // 3. E/M pipeline registers (flopenr, enable EnEM)
+  //      alureg     #(32) ALUResultE -> ALUResultM
+  //      wdreg      #(32) WriteDataE -> WriteDataM
+  //      pcplus4reg #(32) PCPlus4E   -> PCPlus4M
+  //      rdreg      #(5)  RdE        -> RdM
+  //      funct3reg  #(3)  Funct3E    -> Funct3M
+  //      ctrlreg    #(4)  {RegWriteE, MemWriteE, ResultSrcE}
+  //                    -> {RegWriteMReg, MemWriteM, ResultSrcM}
 
-  // E/M pipeline registers
-  flopenr #(32) alureg(.clk(clk), .reset(reset), .en(EnEM), .D(ALUResultE), .Q(ALUResultM));
-  flopenr #(32) wdreg(.clk(clk), .reset(reset), .en(EnEM), .D(WriteDataE), .Q(WriteDataM));
-  flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnEM), .D(PCPlus4E), .Q(PCPlus4M));
-  flopenr #(5)  rdreg(.clk(clk), .reset(reset), .en(EnEM), .D(RdE), .Q(RdM));
-  flopenr #(3)  funct3reg(.clk(clk), .reset(reset), .en(EnEM), .D(Funct3E), .Q(Funct3M));
-  flopenr #(4)  ctrlreg(.clk(clk), .reset(reset), .en(EnEM),
-                        .D({RegWriteE, MemWriteE, ResultSrcE}),
-                        .Q({RegWriteMReg, MemWriteM, ResultSrcM}));
+  // 4. OBI transaction control, one outstanding request per instruction
+  //    - ObiReqM  = ValidMReg & MemOpM & ~DoneM & ~WaitRespM
+  //    - CaptureM = WaitRespM & ObiRvalidM
+  //    - WaitRespM (always_ff): reset 0; set on ObiReqM & ObiGntM
+  //      (when not already waiting); clear on CaptureM
+  //    - DoneM (always_ff): reset 0; clear when a new instruction
+  //      enters (EnEM); set on CaptureM
 
-  // OBI transaction control: one outstanding request per instruction
-  assign ObiReqM  = ValidMReg & MemOpM & ~DoneM & ~WaitRespM;
-  assign CaptureM = WaitRespM & ObiRvalidM;
+  // 5. Raw read data register: rawreg (flopenr #(32)),
+  //    enable CaptureM, ObiRdataM -> ReadRawM
 
-  always_ff @(posedge clk)
-    if (reset) WaitRespM <= 1'b0;
-    else if (~WaitRespM & ObiReqM & ObiGntM) WaitRespM <= 1'b1;
-    else if (CaptureM) WaitRespM <= 1'b0;
+  // 6. Address phase
+  //    - AddrLsbM  = ALUResultM[1:0]
+  //    - ObiAddrM  = word-aligned address (low 2 bits zero)
+  //    - ObiWeM    = MemWriteM
+  //    - ObiWdataM = WriteDataM shifted left by AddrLsbM bytes ({AddrLsbM, 3'b000})
+  //    - ObiBeM by access size Funct3M[1:0]:
+  //        00 byte (sb/lb): 4'b0001 << AddrLsbM
+  //        01 half (sh/lh): AddrLsbM[1] ? 4'b1100 : 4'b0011
+  //        else word:       4'b1111
 
-  always_ff @(posedge clk)
-    if (reset) DoneM <= 1'b0;
-    else if (EnEM) DoneM <= 1'b0;
-    else if (CaptureM) DoneM <= 1'b1;
+  // 7. Read data alignment and extension
+  //    - ReadShiftM = ReadRawM shifted right by AddrLsbM bytes
+  //    - ReadDataM by Funct3M:
+  //        000 lb:  sign-extend byte      001 lh:  sign-extend halfword
+  //        100 lbu: zero-extend byte      101 lhu: zero-extend halfword
+  //        default lw: ReadShiftM
 
-  // raw read data register
-  flopenr #(32) rawreg(.clk(clk), .reset(reset), .en(CaptureM), .D(ObiRdataM), .Q(ReadRawM));
+  // 8. ForwardDataM = load data (ReadDataM) for loads, else ALUResultM
 
-  // address phase: word-aligned address, byte enables from size and offset
-  assign AddrLsbM = ALUResultM[1:0];
-  assign ObiAddrM = {ALUResultM[31:2], 2'b00};
-  assign ObiWeM   = MemWriteM;
-  assign ObiWdataM = WriteDataM << {AddrLsbM, 3'b000};
-
-  always_comb
-    case (Funct3M[1:0])
-      2'b00:   ObiBeM = 4'b0001 << AddrLsbM;              // sb/lb
-      2'b01:   ObiBeM = AddrLsbM[1] ? 4'b1100 : 4'b0011;  // sh/lh
-      default: ObiBeM = 4'b1111;                          // sw/lw
-    endcase
-
-  // read data alignment and sign/zero extension
-  assign ReadShiftM = ReadRawM >> {AddrLsbM, 3'b000};
-
-  always_comb
-    case (Funct3M)
-      3'b000:  ReadDataM = {{24{ReadShiftM[7]}}, ReadShiftM[7:0]};    // lb
-      3'b001:  ReadDataM = {{16{ReadShiftM[15]}}, ReadShiftM[15:0]};  // lh
-      3'b100:  ReadDataM = {24'b0, ReadShiftM[7:0]};                  // lbu
-      3'b101:  ReadDataM = {16'b0, ReadShiftM[15:0]};                 // lhu
-      default: ReadDataM = ReadShiftM;                                // lw
-    endcase
-
-  // forwarding data for the Execute stage: load data or ALU result
-  assign ForwardDataM = (ResultSrcM == RESULT_MEM) ? ReadDataM : ALUResultM;
-
-  // register write indication, qualified with the stage valid bit
-  assign RegWriteM = RegWriteMReg & ValidMReg;
+  // 9. RegWriteM = RegWriteMReg qualified with ValidMReg
 
 endmodule

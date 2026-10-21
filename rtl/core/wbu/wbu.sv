@@ -26,33 +26,25 @@ module wbu (input  logic        clk, reset,
             output logic [4:0]  RdW,
             output logic [31:0] ResultW);
 
-  logic [31:0] ALUResultW, ReadDataW, PCPlus4W;
-  logic        RegWriteWReg;
-  logic [1:0]  ResultSrcW;
-  logic        EnMW;
+  // 0. Internal signals: ALUResultW, ReadDataW, PCPlus4W [31:0],
+  //    RegWriteWReg, ResultSrcW [1:0], EnMW
 
-  // writeback never stalls
-  assign ReadyW = 1'b1;
-  assign EnMW   = ValidM & ReadyW;
+  // 1. M/W handshake: Writeback never stalls
+  //    - ReadyW = 1
+  //    - EnMW   = ValidM & ReadyW
 
-  // M/W valid bit
-  always_ff @(posedge clk)
-    if (reset) ValidW <= 1'b0;
-    else ValidW <= EnMW;
+  // 2. M/W valid bit ValidW (always_ff): reset 0, else ValidW <= EnMW
 
-  // M/W pipeline registers
-  flopenr #(32) alureg(.clk(clk), .reset(reset), .en(EnMW), .D(ALUResultM), .Q(ALUResultW));
-  flopenr #(32) rdatareg(.clk(clk), .reset(reset), .en(EnMW), .D(ReadDataM), .Q(ReadDataW));
-  flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnMW), .D(PCPlus4M), .Q(PCPlus4W));
-  flopenr #(8)  ctrlreg(.clk(clk), .reset(reset), .en(EnMW),
-                        .D({RegWriteM, RdM, ResultSrcM}),
-                        .Q({RegWriteWReg, RdW, ResultSrcW}));
+  // 3. M/W pipeline registers (flopenr, enable EnMW)
+  //      alureg     #(32) ALUResultM -> ALUResultW
+  //      rdatareg   #(32) ReadDataM  -> ReadDataW
+  //      pcplus4reg #(32) PCPlus4M   -> PCPlus4W
+  //      ctrlreg    #(8)  {RegWriteM, RdM, ResultSrcM}
+  //                    -> {RegWriteWReg, RdW, ResultSrcW}
 
-  // result selection
-  mux3 #(32) resultmux(.D0(ALUResultW), .D1(ReadDataW), .D2(PCPlus4W),
-                       .S(ResultSrcW), .Y(ResultW));
+  // 4. Result select: resultmux (mux3), S = ResultSrcW
+  //      D0 = ALUResultW, D1 = ReadDataW, D2 = PCPlus4W -> ResultW
 
-  // register write, qualified with the stage valid bit
-  assign RegWriteW = RegWriteWReg & ValidW;
+  // 5. RegWriteW = RegWriteWReg qualified with ValidW
 
 endmodule

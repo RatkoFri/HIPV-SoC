@@ -22,37 +22,28 @@ module ifuctrl (input  logic clk, reset,
                 input  logic ReadyD, PCSrcE,  // From Decode and Execute
                 output logic ObiReqF, PCEnF, InstrEnF, ValidF);
 
-  typedef enum logic [1:0] {REQUEST, WAIT_RESP, DONE} statetype;
+  // 0. State type: enum logic [1:0] {REQUEST, WAIT_RESP, DONE}
+  //    Signals: State, NextState, DiscardF
 
-  statetype State, NextState;
-  logic     DiscardF;
+  // 1. State register (always_ff): reset -> REQUEST, else State <= NextState
 
-  // state register
-  always_ff @(posedge clk)
-    if (reset) State <= REQUEST;
-    else State <= NextState;
+  // 2. Next state logic (always_comb case (State))
+  //      REQUEST:   ObiGntF ? WAIT_RESP : REQUEST
+  //      WAIT_RESP: if ObiRvalidF: (DiscardF | PCSrcE) ? REQUEST : DONE
+  //                 else stay in WAIT_RESP
+  //      DONE:      (PCSrcE | ReadyD) ? REQUEST : DONE
+  //      default:   REQUEST
 
-  // next state logic
-  always_comb
-    case (State)
-      REQUEST:   NextState = ObiGntF ? WAIT_RESP : REQUEST;
-      WAIT_RESP: if (ObiRvalidF) NextState = (DiscardF | PCSrcE) ? REQUEST : DONE;
-                 else NextState = WAIT_RESP;
-      DONE:      NextState = (PCSrcE | ReadyD) ? REQUEST : DONE;
-      default:   NextState = REQUEST;
-    endcase
+  // 3. DiscardF: marks an outstanding response as stale (always_ff)
+  //      reset              -> 0
+  //      else if ObiRvalidF -> 0 (the stale response has arrived)
+  //      else if PCSrcE while a transaction is outstanding
+  //        (State == WAIT_RESP, or State == REQUEST and ObiGntF) -> 1
 
-  // a redirect while a transaction is outstanding marks its response as stale
-  always_ff @(posedge clk)
-    if (reset) DiscardF <= 1'b0;
-    else if (ObiRvalidF) DiscardF <= 1'b0;
-    else if (PCSrcE & ((State == WAIT_RESP) | ((State == REQUEST) & ObiGntF)))
-      DiscardF <= 1'b1;
-
-  // outputs
-  assign ObiReqF  = (State == REQUEST);
-  assign PCEnF    = PCSrcE | ((State == DONE) & ReadyD);
-  assign InstrEnF = (State == WAIT_RESP) & ObiRvalidF & ~DiscardF & ~PCSrcE;
-  assign ValidF   = (State == DONE) & ~PCSrcE;
+  // 4. Outputs
+  //      ObiReqF  = in REQUEST
+  //      PCEnF    = PCSrcE, or (in DONE and ReadyD)
+  //      InstrEnF = in WAIT_RESP & ObiRvalidF & ~DiscardF & ~PCSrcE
+  //      ValidF   = in DONE & ~PCSrcE
 
 endmodule

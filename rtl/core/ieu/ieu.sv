@@ -46,64 +46,62 @@ module ieu (input  logic        clk, reset,
             output logic        RegWriteE, MemWriteE,
             output logic [1:0]  ResultSrcE);
 
-  logic [31:0] RD1E, RD2E, ImmExtE, PCE;
-  logic [31:0] FwdAE, SrcAE, SrcBE, PCTargetBaseE, JalrTargetE;
-  logic        BranchE, JumpE, JalrE, TakenE;
-  logic [1:0]  ALUSrcAE;
-  logic        ALUSrcBE;
-  logic [3:0]  ALUControlE;
-  logic        EnDE, ValidEReg, HoldE;
-  logic [31:0] RD1NextE, RD2NextE;
+  // 0. Internal signals
+  //      RD1E, RD2E, ImmExtE, PCE                         [31:0]
+  //      FwdAE, SrcAE, SrcBE, PCTargetBaseE, JalrTargetE  [31:0]
+  //      RD1NextE, RD2NextE                               [31:0]
+  //      BranchE, JumpE, JalrE, TakenE, ALUSrcBE
+  //      ALUSrcAE [1:0], ALUControlE [3:0]
+  //      EnDE, ValidEReg, HoldE
 
-  // D/E handshake: accept when the stage is empty or being drained
-  assign ReadyE = ~ValidEReg | ReadyM;
-  assign EnDE   = ValidD & ReadyE;
-  assign ValidE = ValidEReg;
+  // 1. D/E handshake
+  //    - ReadyE = stage is empty (~ValidEReg) or being drained (ReadyM)
+  //    - EnDE   = ValidD & ReadyE
+  //    - ValidE = ValidEReg
 
-  // D/E valid bit
-  always_ff @(posedge clk)
-    if (reset) ValidEReg <= 1'b0;
-    else if (ReadyE) ValidEReg <= ValidD;
+  // 2. D/E valid bit ValidEReg (always_ff)
+  //    - reset: 0, else if ReadyE: take ValidD
 
-  // D/E pipeline registers
-  // While an instruction waits in E, refresh its register operands with
-  // the forwarded values: the producer can retire from W (and stop being
-  // forwarded) before this instruction leaves E.
-  assign HoldE = ValidEReg & ~ReadyE;
-  mux2 #(32) rd1mux(.D0(FwdAE), .D1(RD1D), .S(EnDE), .Y(RD1NextE));
-  mux2 #(32) rd2mux(.D0(WriteDataE), .D1(RD2D), .S(EnDE), .Y(RD2NextE));
-  flopenr #(32) rd1reg(.clk(clk), .reset(reset), .en(EnDE | HoldE), .D(RD1NextE), .Q(RD1E));
-  flopenr #(32) rd2reg(.clk(clk), .reset(reset), .en(EnDE | HoldE), .D(RD2NextE), .Q(RD2E));
-  flopenr #(32) immreg(.clk(clk), .reset(reset), .en(EnDE), .D(ImmExtD), .Q(ImmExtE));
-  flopenr #(32) pcreg(.clk(clk), .reset(reset), .en(EnDE), .D(PCD), .Q(PCE));
-  flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnDE), .D(PCPlus4D), .Q(PCPlus4E));
-  flopenr #(15) regsreg(.clk(clk), .reset(reset), .en(EnDE),
-                        .D({Rs1D, Rs2D, RdD}), .Q({Rs1E, Rs2E, RdE}));
-  flopenr #(3)  funct3reg(.clk(clk), .reset(reset), .en(EnDE), .D(Funct3D), .Q(Funct3E));
-  flopenr #(14) ctrlreg(.clk(clk), .reset(reset), .en(EnDE),
-                        .D({RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ResultSrcD,
-                            ALUSrcAD, ALUSrcBD, ALUControlD}),
-                        .Q({RegWriteE, MemWriteE, BranchE, JumpE, JalrE, ResultSrcE,
-                            ALUSrcAE, ALUSrcBE, ALUControlE}));
+  // 3. Operand refresh while E stalls
+  //    - HoldE = ValidEReg & ~ReadyE (instruction waiting in E)
+  //    - The producer can leave W (and stop being forwarded) before this
+  //      instruction leaves E, so keep re-capturing the forwarded values:
+  //        rd1mux (mux2): EnDE ? RD1D : FwdAE      -> RD1NextE
+  //        rd2mux (mux2): EnDE ? RD2D : WriteDataE -> RD2NextE
 
-  // forwarding muxes: register operand / ResultW / ForwardDataM
-  mux3 #(32) fwdamux(.D0(RD1E), .D1(ResultW), .D2(ForwardDataM), .S(ForwardAE), .Y(FwdAE));
-  mux3 #(32) fwdbmux(.D0(RD2E), .D1(ResultW), .D2(ForwardDataM), .S(ForwardBE), .Y(WriteDataE));
+  // 4. D/E pipeline registers (flopenr)
+  //    - enable EnDE | HoldE:  rd1reg RD1NextE -> RD1E, rd2reg RD2NextE -> RD2E
+  //    - enable EnDE:
+  //        immreg     #(32) ImmExtD  -> ImmExtE
+  //        pcreg      #(32) PCD      -> PCE
+  //        pcplus4reg #(32) PCPlus4D -> PCPlus4E
+  //        regsreg    #(15) {Rs1D, Rs2D, RdD} -> {Rs1E, Rs2E, RdE}
+  //        funct3reg  #(3)  Funct3D  -> Funct3E
+  //        ctrlreg    #(14) {RegWrite, MemWrite, Branch, Jump, Jalr, ResultSrc,
+  //                          ALUSrcA, ALUSrcB, ALUControl}  D -> E
 
-  // ALU operand selection: A = rs1/PC/zero, B = rs2/immediate
-  mux3 #(32) srcamux(.D0(FwdAE), .D1(PCE), .D2(32'b0), .S(ALUSrcAE), .Y(SrcAE));
-  mux2 #(32) srcbmux(.D0(WriteDataE), .D1(ImmExtE), .S(ALUSrcBE), .Y(SrcBE));
+  // 5. Forwarding muxes (mux3), select from the hazard unit
+  //      fwdamux: D0 = RD1E, D1 = ResultW, D2 = ForwardDataM, S = ForwardAE -> FwdAE
+  //      fwdbmux: D0 = RD2E, D1 = ResultW, D2 = ForwardDataM, S = ForwardBE -> WriteDataE
+  //    (the forwarded rs2 is also the store data)
 
-  // ALU and branch comparator (comparator uses the forwarded operands)
-  alu alu(.A(SrcAE), .B(SrcBE), .ALUControl(ALUControlE), .Y(ALUResultE));
-  branchcmp bcmp(.A(FwdAE), .B(WriteDataE), .Funct3E(Funct3E), .TakenE(TakenE));
+  // 6. ALU operand selection
+  //      srcamux (mux3): FwdAE / PCE / 32'b0, S = ALUSrcAE -> SrcAE
+  //      srcbmux (mux2): WriteDataE / ImmExtE, S = ALUSrcBE -> SrcBE
 
-  // branch/jump target: PC + imm for branch/jal, ALU (rs1 + imm) for jalr
-  adder #(32) targetadd(.A(PCE), .B(ImmExtE), .Y(PCTargetBaseE));
-  assign JalrTargetE = {ALUResultE[31:1], 1'b0};
-  mux2 #(32) targetmux(.D0(PCTargetBaseE), .D1(JalrTargetE), .S(JalrE), .Y(PCTargetE));
+  // 7. ALU and branch comparator
+  //      alu "alu":        SrcAE, SrcBE, ALUControlE -> ALUResultE
+  //      branchcmp "bcmp": FwdAE, WriteDataE, Funct3E -> TakenE
+  //                        (compares the forwarded registers, not SrcA/SrcB)
 
-  // redirect, qualified with the valid bit and gated to the retire cycle
-  assign PCSrcE = ValidEReg & ReadyM & (JumpE | JalrE | (BranchE & TakenE));
+  // 8. Branch/jump target
+  //      targetadd (adder): PCE + ImmExtE -> PCTargetBaseE  (branch, jal)
+  //      JalrTargetE = ALUResultE with bit 0 cleared        (jalr: rs1 + imm)
+  //      targetmux (mux2): JalrE selects JalrTargetE        -> PCTargetE
+
+  // 9. Redirect
+  //      PCSrcE = ValidEReg & ReadyM & (JumpE | JalrE | (BranchE & TakenE))
+  //      Gated with ReadyM: fire only in the cycle the instruction leaves E,
+  //      when the forwarded operands are guaranteed to be resolved.
 
 endmodule

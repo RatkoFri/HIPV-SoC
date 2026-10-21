@@ -12,21 +12,19 @@ module alu (input  logic [31:0] A, B,
             input  logic [3:0]  ALUControl,
             output logic [31:0] Y);
 
-  import hipv_pkg::*;
+  // 0. import hipv_pkg::* for the ALU_* encodings
 
-  always_comb
-    case (ALUControl)
-      ALU_ADD:  Y = A + B;
-      ALU_SUB:  Y = A - B;
-      ALU_SLL:  Y = A << B[4:0];
-      ALU_SLT:  Y = {31'b0, $signed(A) < $signed(B)};
-      ALU_SLTU: Y = {31'b0, A < B};
-      ALU_XOR:  Y = A ^ B;
-      ALU_SRL:  Y = A >> B[4:0];
-      ALU_SRA:  Y = $unsigned($signed(A) >>> B[4:0]);
-      ALU_OR:   Y = A | B;
-      ALU_AND:  Y = A & B;
-      default:  Y = 32'b0;
-    endcase
+  // 1. always_comb case (ALUControl)
+  //      ALU_ADD:  A + B
+  //      ALU_SUB:  A - B
+  //      ALU_SLL:  A << B[4:0]          (shift amount is only 5 bits)
+  //      ALU_SLT:  signed A < B   -> {31'b0, result}   (use $signed)
+  //      ALU_SLTU: unsigned A < B -> {31'b0, result}
+  //      ALU_XOR:  A ^ B
+  //      ALU_SRL:  A >> B[4:0]
+  //      ALU_SRA:  $signed(A) >>> B[4:0], cast back with $unsigned
+  //      ALU_OR:   A | B
+  //      ALU_AND:  A & B
+  //      default:  32'b0
 
 endmodule

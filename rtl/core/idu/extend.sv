@@ -12,16 +12,15 @@ module extend (input  logic [31:7] InstrD,
                input  logic [2:0]  ImmSrcD,
                output logic [31:0] ImmExtD);
 
-  import hipv_pkg::*;
+  // 0. import hipv_pkg::* for the IMM_* encodings
 
-  always_comb
-    case (ImmSrcD)
-      IMM_I:   ImmExtD = {{20{InstrD[31]}}, InstrD[31:20]};
-      IMM_S:   ImmExtD = {{20{InstrD[31]}}, InstrD[31:25], InstrD[11:7]};
-      IMM_B:   ImmExtD = {{20{InstrD[31]}}, InstrD[7], InstrD[30:25], InstrD[11:8], 1'b0};
-      IMM_J:   ImmExtD = {{12{InstrD[31]}}, InstrD[19:12], InstrD[20], InstrD[30:21], 1'b0};
-      IMM_U:   ImmExtD = {InstrD[31:12], 12'b0};
-      default: ImmExtD = 32'b0;
-    endcase
+  // 1. always_comb case (ImmSrcD). Instr[31] is always the sign bit;
+  //    replicate it to fill the upper bits ({n{InstrD[31]}}).
+  //      IMM_I: imm[11:0]  = Instr[31:20]
+  //      IMM_S: imm[11:0]  = {Instr[31:25], Instr[11:7]}
+  //      IMM_B: imm[12:0]  = {Instr[31], Instr[7], Instr[30:25], Instr[11:8], 1'b0}
+  //      IMM_J: imm[20:0]  = {Instr[31], Instr[19:12], Instr[20], Instr[30:21], 1'b0}
+  //      IMM_U: imm[31:0]  = {Instr[31:12], 12'b0}   (no extension needed)
+  //      default: 32'b0
 
 endmodule

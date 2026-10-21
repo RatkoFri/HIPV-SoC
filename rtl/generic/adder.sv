@@ -10,6 +10,8 @@ module adder #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] A, B,
   output logic [WIDTH-1:0] Y);
 
-  assign Y = A + B;
+  // Y = A + B
+  //   - one continuous assignment (assign)
+  //   - result is WIDTH bits, the carry out is dropped
 
 endmodule

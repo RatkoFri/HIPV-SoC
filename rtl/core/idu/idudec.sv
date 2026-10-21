@@ -25,47 +25,36 @@ module idudec (input  logic [6:0] OpD,
                output logic       BranchD, JumpD, JalrD,
                output logic [3:0] ALUControlD);
 
-  import hipv_pkg::*;
+  // 0. import hipv_pkg::* (OP_*, IMM_*, SRCA_*, RESULT_*, ALU_*)
+  //    Internal signals: ControlsD [14:0], ALUOpD [1:0], RtypeSubD
 
-  logic [14:0] ControlsD;
-  logic [1:0]  ALUOpD;
-  logic        RtypeSubD;
+  // 1. Unpack the control word with one concatenation assign:
+  //      {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemWriteD, ResultSrcD,
+  //       BranchD, JumpD, JalrD, ALUOpD} = ControlsD
 
-  assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemWriteD, ResultSrcD,
-          BranchD, JumpD, JalrD, ALUOpD} = ControlsD;
+  // 2. Main decoder: always_comb case (OpD)
+  //               RegWrite ImmSrc SrcA       SrcB MemWrite ResultSrc  Branch Jump Jalr ALUOp
+  //    OP_RTYPE   1        IMM_I  SRCA_RF    0    0        RESULT_ALU 0      0    0    10
+  //    OP_IALU    1        IMM_I  SRCA_RF    1    0        RESULT_ALU 0      0    0    10
+  //    OP_LOAD    1        IMM_I  SRCA_RF    1    0        RESULT_MEM 0      0    0    00
+  //    OP_STORE   0        IMM_S  SRCA_RF    1    1        RESULT_ALU 0      0    0    00
+  //    OP_BRANCH  0        IMM_B  SRCA_RF    0    0        RESULT_ALU 1      0    0    01
+  //    OP_JAL     1        IMM_J  SRCA_RF    0    0        RESULT_PC4 0      1    0    00
+  //    OP_JALR    1        IMM_I  SRCA_RF    1    0        RESULT_PC4 0      0    1    00
+  //    OP_LUI     1        IMM_U  SRCA_ZERO  1    0        RESULT_ALU 0      0    0    00
+  //    OP_AUIPC   1        IMM_U  SRCA_PC    1    0        RESULT_ALU 0      0    0    00
+  //    default:   all zeros (unimplemented opcode -> nop)
+  //    (ImmSrc of R-type is a don't care; use IMM_I)
 
-  // main decoder
-  //                        RegWrite ImmSrc SrcA       SrcB  MemWrite ResultSrc   Branch Jump  Jalr  ALUOp
-  always_comb
-    case (OpD)
-      OP_RTYPE:  ControlsD = {1'b1, IMM_I, SRCA_RF,   1'b0, 1'b0, RESULT_ALU, 1'b0, 1'b0, 1'b0, 2'b10};
-      OP_IALU:   ControlsD = {1'b1, IMM_I, SRCA_RF,   1'b1, 1'b0, RESULT_ALU, 1'b0, 1'b0, 1'b0, 2'b10};
-      OP_LOAD:   ControlsD = {1'b1, IMM_I, SRCA_RF,   1'b1, 1'b0, RESULT_MEM, 1'b0, 1'b0, 1'b0, 2'b00};
-      OP_STORE:  ControlsD = {1'b0, IMM_S, SRCA_RF,   1'b1, 1'b1, RESULT_ALU, 1'b0, 1'b0, 1'b0, 2'b00};
-      OP_BRANCH: ControlsD = {1'b0, IMM_B, SRCA_RF,   1'b0, 1'b0, RESULT_ALU, 1'b1, 1'b0, 1'b0, 2'b01};
-      OP_JAL:    ControlsD = {1'b1, IMM_J, SRCA_RF,   1'b0, 1'b0, RESULT_PC4, 1'b0, 1'b1, 1'b0, 2'b00};
-      OP_JALR:   ControlsD = {1'b1, IMM_I, SRCA_RF,   1'b1, 1'b0, RESULT_PC4, 1'b0, 1'b0, 1'b1, 2'b00};
-      OP_LUI:    ControlsD = {1'b1, IMM_U, SRCA_ZERO, 1'b1, 1'b0, RESULT_ALU, 1'b0, 1'b0, 1'b0, 2'b00};
-      OP_AUIPC:  ControlsD = {1'b1, IMM_U, SRCA_PC,   1'b1, 1'b0, RESULT_ALU, 1'b0, 1'b0, 1'b0, 2'b00};
-      default:   ControlsD = 15'b0;  // unimplemented opcode: nop
-    endcase
+  // 3. RtypeSubD = Funct7b5D & OpD[5]
+  //    sub exists only as R-type; addi with imm[10] = 1 must stay an add
 
-  // sub only exists as an R-type encoding (addi has no subi)
-  assign RtypeSubD = Funct7b5D & OpD[5];
-
-  // ALU decoder
-  always_comb
-    if (ALUOpD == 2'b10)
-      case (Funct3D)
-        3'b000:  ALUControlD = RtypeSubD ? ALU_SUB : ALU_ADD;
-        3'b001:  ALUControlD = ALU_SLL;
-        3'b010:  ALUControlD = ALU_SLT;
-        3'b011:  ALUControlD = ALU_SLTU;
-        3'b100:  ALUControlD = ALU_XOR;
-        3'b101:  ALUControlD = Funct7b5D ? ALU_SRA : ALU_SRL;
-        3'b110:  ALUControlD = ALU_OR;
-        default: ALUControlD = ALU_AND;
-      endcase
-    else ALUControlD = ALU_ADD;  // address / target computation
+  // 4. ALU decoder: always_comb
+  //    if ALUOpD == 2'b10, case (Funct3D):
+  //      000 -> RtypeSubD ? ALU_SUB : ALU_ADD
+  //      001 -> ALU_SLL       010 -> ALU_SLT       011 -> ALU_SLTU
+  //      100 -> ALU_XOR       101 -> Funct7b5D ? ALU_SRA : ALU_SRL
+  //      110 -> ALU_OR        111 -> ALU_AND
+  //    else ALU_ADD (address and jalr target computation)
 
 endmodule

@@ -12,15 +12,13 @@ module branchcmp (input  logic [31:0] A, B,
                   input  logic [2:0]  Funct3E,
                   output logic        TakenE);
 
-  always_comb
-    case (Funct3E)
-      3'b000:  TakenE = (A == B);                    // beq
-      3'b001:  TakenE = (A != B);                    // bne
-      3'b100:  TakenE = ($signed(A) < $signed(B));   // blt
-      3'b101:  TakenE = ($signed(A) >= $signed(B));  // bge
-      3'b110:  TakenE = (A < B);                     // bltu
-      3'b111:  TakenE = (A >= B);                    // bgeu
-      default: TakenE = 1'b0;                        // reserved encodings
-    endcase
+  // 1. always_comb case (Funct3E)
+  //      000 beq:  A == B
+  //      001 bne:  A != B
+  //      100 blt:  signed   A <  B   ($signed)
+  //      101 bge:  signed   A >= B
+  //      110 bltu: unsigned A <  B
+  //      111 bgeu: unsigned A >= B
+  //      default (010, 011 reserved): 0
 
 endmodule

@@ -19,14 +19,15 @@ module regfile (input  logic        clk,
                 input  logic [31:0] WD3,
                 output logic [31:0] RD1, RD2);
 
-  logic [31:0] RF[31:0];
+  // 0. Storage: array of 32 registers, 32 bits each (RF[31:0])
+  //    No reset; software writes a register before reading it.
 
-  // synchronous write port (writes to x0 are ignored)
-  always_ff @(posedge clk)
-    if (WE3 & (A3 != 5'b0)) RF[A3] <= WD3;
+  // 1. Write port (always_ff, rising edge of clk)
+  //    - write WD3 to RF[A3] when WE3 and A3 is not x0
 
-  // combinational read ports with write-first bypass
-  assign RD1 = (A1 == 5'b0) ? 32'b0 : (WE3 & (A1 == A3)) ? WD3 : RF[A1];
-  assign RD2 = (A2 == 5'b0) ? 32'b0 : (WE3 & (A2 == A3)) ? WD3 : RF[A2];
+  // 2. Read ports (combinational assign), for RD1 (A1) and RD2 (A2):
+  //    - address x0                 -> 32'b0
+  //    - same-cycle write (WE3 and address == A3) -> WD3 (write-first bypass)
+  //    - otherwise                  -> RF[address]
 
 endmodule

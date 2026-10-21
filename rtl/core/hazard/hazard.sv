@@ -21,16 +21,20 @@ module hazard (input  logic [4:0] Rs1E, Rs2E,
                input  logic       RegWriteM, RegWriteW,
                output logic [1:0] ForwardAE, ForwardBE);
 
-  import hipv_pkg::*;
+  // 0. import hipv_pkg::* for the forwarding encodings
+  //      FWD_RF  = operand from the D/E register (no dependency)
+  //      FWD_WB  = ResultW from Writeback
+  //      FWD_MEM = ForwardDataM from Memory
 
-  always_comb
-    if (RegWriteM & (Rs1E == RdM) & (Rs1E != 5'b0)) ForwardAE = FWD_MEM;
-    else if (RegWriteW & (Rs1E == RdW) & (Rs1E != 5'b0)) ForwardAE = FWD_WB;
-    else ForwardAE = FWD_RF;
+  // 1. ForwardAE (operand rs1), always_comb, in priority order:
+  //      a) RegWriteM and Rs1E == RdM and Rs1E != x0  -> FWD_MEM (newest value)
+  //      b) RegWriteW and Rs1E == RdW and Rs1E != x0  -> FWD_WB
+  //      c) otherwise                                 -> FWD_RF
 
-  always_comb
-    if (RegWriteM & (Rs2E == RdM) & (Rs2E != 5'b0)) ForwardBE = FWD_MEM;
-    else if (RegWriteW & (Rs2E == RdW) & (Rs2E != 5'b0)) ForwardBE = FWD_WB;
-    else ForwardBE = FWD_RF;
+  // 2. ForwardBE (operand rs2): same rules with Rs2E
+
+  // Note: no stall output. A load holds the M stage (ReadyM = 0) until
+  // its data arrives; the dependent instruction waits in E and then
+  // takes the load data via FWD_MEM.
 
 endmodule

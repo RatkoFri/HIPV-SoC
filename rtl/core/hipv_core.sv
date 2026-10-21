@@ -27,107 +27,60 @@ module hipv_core (input  logic        clk, reset,
                   input  logic        ObiDRvalid,
                   input  logic [31:0] ObiDRdata);
 
-  // F <-> D
-  logic        ValidF, ReadyD;
-  logic [31:0] InstrF, PCF, PCPlus4F;
-  // D <-> E
-  logic        ValidD, ReadyE;
-  logic [31:0] RD1D, RD2D, ImmExtD, PCD, PCPlus4D;
-  logic [4:0]  Rs1D, Rs2D, RdD;
-  logic [2:0]  Funct3D;
-  logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ALUSrcBD;
-  logic [1:0]  ResultSrcD, ALUSrcAD;
-  logic [3:0]  ALUControlD;
-  // E <-> M
-  logic        ValidE, ReadyM;
-  logic [31:0] ALUResultE, WriteDataE, PCPlus4E;
-  logic [4:0]  RdE, Rs1E, Rs2E;
-  logic [2:0]  Funct3E;
-  logic        RegWriteE, MemWriteE;
-  logic [1:0]  ResultSrcE;
-  // redirect
-  logic        PCSrcE;
-  logic [31:0] PCTargetE;
-  // M <-> W
-  logic        ValidM, ReadyW;
-  logic [31:0] ALUResultM, ReadDataM, PCPlus4M, ForwardDataM;
-  logic [4:0]  RdM;
-  logic        RegWriteM;
-  logic [1:0]  ResultSrcM;
-  // W outputs. ValidW marks instruction retirement: nothing in the core
-  // consumes it (RegWriteW is already valid-qualified), but it is kept
-  // as a retirement marker for waveform debugging and as the hook for a
-  // future trace/RVFI port.
-  /* verilator lint_off UNUSEDSIGNAL */
-  logic        ValidW;
-  /* verilator lint_on UNUSEDSIGNAL */
-  logic        RegWriteW;
-  logic [4:0]  RdW;
-  logic [31:0] ResultW;
-  // forwarding
-  logic [1:0]  ForwardAE, ForwardBE;
+  // 1. Declare the signals between the stages, grouped by stage boundary
+  //    F <-> D:   ValidF, ReadyD
+  //               InstrF, PCF, PCPlus4F                        [31:0]
+  //    D <-> E:   ValidD, ReadyE
+  //               RD1D, RD2D, ImmExtD, PCD, PCPlus4D           [31:0]
+  //               Rs1D, Rs2D, RdD                              [4:0]
+  //               Funct3D                                      [2:0]
+  //               RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ALUSrcBD
+  //               ResultSrcD, ALUSrcAD                         [1:0]
+  //               ALUControlD                                  [3:0]
+  //    E <-> M:   ValidE, ReadyM
+  //               ALUResultE, WriteDataE, PCPlus4E             [31:0]
+  //               RdE, Rs1E, Rs2E                              [4:0]
+  //               Funct3E                                      [2:0]
+  //               RegWriteE, MemWriteE
+  //               ResultSrcE                                   [1:0]
+  //    redirect:  PCSrcE, PCTargetE [31:0]
+  //    M <-> W:   ValidM, ReadyW
+  //               ALUResultM, ReadDataM, PCPlus4M, ForwardDataM [31:0]
+  //               RdM [4:0], RegWriteM, ResultSrcM [1:0]
+  //    W outputs: ValidW (retirement marker, unused: wrap its declaration
+  //               in a lint_off/lint_on UNUSEDSIGNAL pair), RegWriteW,
+  //               RdW [4:0], ResultW [31:0]
+  //    hazard:    ForwardAE, ForwardBE                         [1:0]
 
-  // Fetch
-  ifu ifu(.clk(clk), .reset(reset),
-          .ReadyD(ReadyD), .ValidF(ValidF),
-          .PCSrcE(PCSrcE), .PCTargetE(PCTargetE),
-          .InstrF(InstrF), .PCF(PCF), .PCPlus4F(PCPlus4F),
-          .ObiReqF(ObiIReq), .ObiGntF(ObiIGnt), .ObiAddrF(ObiIAddr),
-          .ObiRvalidF(ObiIRvalid), .ObiRdataF(ObiIRdata));
+  // 2. Fetch: ifu "ifu"
+  //    - handshake ReadyD/ValidF, redirect PCSrcE/PCTargetE
+  //    - outputs InstrF, PCF, PCPlus4F
+  //    - OBI ports Obi*F connect to the core ObiI* ports
 
-  // Decode
-  idu idu(.clk(clk), .reset(reset),
-          .ValidF(ValidF), .ReadyD(ReadyD),
-          .InstrF(InstrF), .PCF(PCF), .PCPlus4F(PCPlus4F),
-          .PCSrcE(PCSrcE),
-          .ValidD(ValidD), .ReadyE(ReadyE),
-          .RegWriteW(RegWriteW), .RdW(RdW), .ResultW(ResultW),
-          .RD1D(RD1D), .RD2D(RD2D), .ImmExtD(ImmExtD), .PCD(PCD), .PCPlus4D(PCPlus4D),
-          .Rs1D(Rs1D), .Rs2D(Rs2D), .RdD(RdD), .Funct3D(Funct3D),
-          .RegWriteD(RegWriteD), .MemWriteD(MemWriteD), .BranchD(BranchD),
-          .JumpD(JumpD), .JalrD(JalrD), .ResultSrcD(ResultSrcD),
-          .ALUSrcAD(ALUSrcAD), .ALUSrcBD(ALUSrcBD), .ALUControlD(ALUControlD));
+  // 3. Decode: idu "idu"
+  //    - from F: ValidF/ReadyD, InstrF, PCF, PCPlus4F; flush PCSrcE
+  //    - to E: ValidD/ReadyE and all *D signals
+  //    - register file write port from W: RegWriteW, RdW, ResultW
 
-  // Execute
-  ieu ieu(.clk(clk), .reset(reset),
-          .ValidD(ValidD), .ReadyE(ReadyE),
-          .RD1D(RD1D), .RD2D(RD2D), .ImmExtD(ImmExtD), .PCD(PCD), .PCPlus4D(PCPlus4D),
-          .Rs1D(Rs1D), .Rs2D(Rs2D), .RdD(RdD), .Funct3D(Funct3D),
-          .RegWriteD(RegWriteD), .MemWriteD(MemWriteD), .BranchD(BranchD),
-          .JumpD(JumpD), .JalrD(JalrD), .ResultSrcD(ResultSrcD),
-          .ALUSrcAD(ALUSrcAD), .ALUSrcBD(ALUSrcBD), .ALUControlD(ALUControlD),
-          .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
-          .ForwardDataM(ForwardDataM), .ResultW(ResultW),
-          .PCSrcE(PCSrcE), .PCTargetE(PCTargetE),
-          .ValidE(ValidE), .ReadyM(ReadyM),
-          .ALUResultE(ALUResultE), .WriteDataE(WriteDataE), .PCPlus4E(PCPlus4E),
-          .RdE(RdE), .Rs1E(Rs1E), .Rs2E(Rs2E), .Funct3E(Funct3E),
-          .RegWriteE(RegWriteE), .MemWriteE(MemWriteE), .ResultSrcE(ResultSrcE));
+  // 4. Execute: ieu "ieu"
+  //    - from D: ValidD/ReadyE and all *D signals
+  //    - forwarding: ForwardAE, ForwardBE, ForwardDataM, ResultW
+  //    - redirect out: PCSrcE, PCTargetE
+  //    - to M: ValidE/ReadyM and all *E signals (incl. Rs1E, Rs2E for hazard)
 
-  // Memory
-  lsu lsu(.clk(clk), .reset(reset),
-          .ValidE(ValidE), .ReadyM(ReadyM),
-          .ALUResultE(ALUResultE), .WriteDataE(WriteDataE), .PCPlus4E(PCPlus4E),
-          .RdE(RdE), .Funct3E(Funct3E),
-          .RegWriteE(RegWriteE), .MemWriteE(MemWriteE), .ResultSrcE(ResultSrcE),
-          .ValidM(ValidM), .ReadyW(ReadyW),
-          .ALUResultM(ALUResultM), .ReadDataM(ReadDataM), .PCPlus4M(PCPlus4M),
-          .RdM(RdM), .RegWriteM(RegWriteM), .ResultSrcM(ResultSrcM),
-          .ForwardDataM(ForwardDataM),
-          .ObiReqM(ObiDReq), .ObiGntM(ObiDGnt), .ObiAddrM(ObiDAddr),
-          .ObiWeM(ObiDWe), .ObiBeM(ObiDBe), .ObiWdataM(ObiDWdata),
-          .ObiRvalidM(ObiDRvalid), .ObiRdataM(ObiDRdata));
+  // 5. Memory: lsu "lsu"
+  //    - from E: ValidE/ReadyM, ALUResultE, WriteDataE, PCPlus4E, RdE,
+  //      Funct3E, RegWriteE, MemWriteE, ResultSrcE
+  //    - to W: ValidM/ReadyW, ALUResultM, ReadDataM, PCPlus4M, RdM,
+  //      RegWriteM, ResultSrcM
+  //    - ForwardDataM back to Execute
+  //    - OBI ports Obi*M connect to the core ObiD* ports
 
-  // Writeback
-  wbu wbu(.clk(clk), .reset(reset),
-          .ValidM(ValidM), .ReadyW(ReadyW),
-          .ALUResultM(ALUResultM), .ReadDataM(ReadDataM), .PCPlus4M(PCPlus4M),
-          .RdM(RdM), .RegWriteM(RegWriteM), .ResultSrcM(ResultSrcM),
-          .ValidW(ValidW), .RegWriteW(RegWriteW), .RdW(RdW), .ResultW(ResultW));
+  // 6. Writeback: wbu "wbu"
+  //    - from M: ValidM/ReadyW and the *M signals
+  //    - outputs ValidW, RegWriteW, RdW, ResultW
 
-  // Hazard unit (forwarding)
-  hazard hz(.Rs1E(Rs1E), .Rs2E(Rs2E), .RdM(RdM), .RdW(RdW),
-            .RegWriteM(RegWriteM), .RegWriteW(RegWriteW),
-            .ForwardAE(ForwardAE), .ForwardBE(ForwardBE));
+  // 7. Hazard unit: hazard "hz"
+  //    - Rs1E, Rs2E, RdM, RdW, RegWriteM, RegWriteW -> ForwardAE, ForwardBE
 
 endmodule

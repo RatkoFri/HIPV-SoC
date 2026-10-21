@@ -37,44 +37,37 @@ module idu (input  logic        clk, reset,
             output logic        ALUSrcBD,
             output logic [3:0]  ALUControlD);
 
-  logic [31:0] InstrD;
-  logic [2:0]  ImmSrcD;
-  logic        EnFD, ValidDReg;
+  // 0. Internal signals: InstrD [31:0], ImmSrcD [2:0], EnFD, ValidDReg
 
-  // F/D handshake: accept when the stage is empty or being drained
-  assign ReadyD = ~ValidDReg | ReadyE;
-  assign EnFD   = ValidF & ReadyD;
-  assign ValidD = ValidDReg & ~PCSrcE;
+  // 1. F/D handshake
+  //    - ReadyD = stage is empty (~ValidDReg) or being drained (ReadyE)
+  //    - EnFD   = Fetch offers (ValidF) and we accept (ReadyD)
+  //    - ValidD = ValidDReg, killed by a taken branch/jump (PCSrcE)
 
-  // F/D valid bit, cleared by a flush
-  always_ff @(posedge clk)
-    if (reset) ValidDReg <= 1'b0;
-    else if (ReadyD) ValidDReg <= ValidF;
-    //else if (PCSrcE) ValidDReg <= 1'b0;
-    //else if (ReadyD) ValidDReg <= ValidF;
+  // 2. F/D valid bit ValidDReg (always_ff)
+  //    - reset: 0
+  //    - else if ReadyD: take ValidF
+  //    No extra flush term needed: PCSrcE implies ReadyD, and ValidF is
+  //    already low during a redirect.
 
-  // F/D pipeline registers
-  flopenr #(32) instrreg(.clk(clk), .reset(reset), .en(EnFD), .D(InstrF), .Q(InstrD));
-  flopenr #(32) pcreg(.clk(clk), .reset(reset), .en(EnFD), .D(PCF), .Q(PCD));
-  flopenr #(32) pcplus4reg(.clk(clk), .reset(reset), .en(EnFD), .D(PCPlus4F), .Q(PCPlus4D));
+  // 3. F/D pipeline registers: flopenr #(32), enable EnFD
+  //      instrreg:   InstrF   -> InstrD
+  //      pcreg:      PCF      -> PCD
+  //      pcplus4reg: PCPlus4F -> PCPlus4D
 
-  // instruction fields
-  assign Rs1D    = InstrD[19:15];
-  assign Rs2D    = InstrD[24:20];
-  assign RdD     = InstrD[11:7];
-  assign Funct3D = InstrD[14:12];
+  // 4. Instruction fields from InstrD
+  //      Rs1D = [19:15], Rs2D = [24:20], RdD = [11:7], Funct3D = [14:12]
 
-  // control decoder
-  idudec dec(.OpD(InstrD[6:0]), .Funct3D(Funct3D), .Funct7b5D(InstrD[30]),
-             .RegWriteD(RegWriteD), .ImmSrcD(ImmSrcD), .ALUSrcAD(ALUSrcAD),
-             .ALUSrcBD(ALUSrcBD), .MemWriteD(MemWriteD), .ResultSrcD(ResultSrcD),
-             .BranchD(BranchD), .JumpD(JumpD), .JalrD(JalrD), .ALUControlD(ALUControlD));
+  // 5. Control decoder: idudec "dec"
+  //    - inputs:  OpD = InstrD[6:0], Funct3D, Funct7b5D = InstrD[30]
+  //    - outputs: RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemWriteD,
+  //               ResultSrcD, BranchD, JumpD, JalrD, ALUControlD
 
-  // register file, written by the Writeback stage
-  regfile rf(.clk(clk), .WE3(RegWriteW), .A1(Rs1D), .A2(Rs2D), .A3(RdW),
-             .WD3(ResultW), .RD1(RD1D), .RD2(RD2D));
+  // 6. Register file: regfile "rf"
+  //    - read:  A1 = Rs1D -> RD1D, A2 = Rs2D -> RD2D
+  //    - write (from Writeback): WE3 = RegWriteW, A3 = RdW, WD3 = ResultW
 
-  // immediate extension
-  extend ext(.InstrD(InstrD[31:7]), .ImmSrcD(ImmSrcD), .ImmExtD(ImmExtD));
+  // 7. Immediate extension: extend "ext"
+  //    - InstrD[31:7], ImmSrcD -> ImmExtD
 
 endmodule
