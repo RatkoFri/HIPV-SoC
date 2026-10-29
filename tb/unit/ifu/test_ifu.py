@@ -9,6 +9,9 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge
 import logging
 
+# ifuctrl state encoding (statetype: REQUEST, WAIT_RESP, DONE)
+WAIT_RESP = 1
+
 
 def imem_word(addr):
     """Deterministic fake instruction for a given byte address."""
@@ -125,16 +128,24 @@ async def test_redirect(dut):
 
 @cocotb.test()
 async def test_redirect_midfetch(dut):
-    """A redirect while a fetch is outstanding discards its response."""
+    """A redirect in WAIT_RESP discards the outstanding response."""
     await start(dut, rvalid_delay=4)
     target = 0x0000_2A00
-    # fetch of address 0 is in flight; redirect before rvalid arrives
-    for _ in range(2):
+    # the fetch of address 0 has been granted; wait until ifuctrl is
+    # waiting for its response, which has not arrived yet
+    for _ in range(20):
         await FallingEdge(dut.clk)
+        if int(dut.ctrl.State.value) == WAIT_RESP and not dut.ObiRvalidF.value:
+            break
+    else:
+        raise AssertionError("ifuctrl never reached WAIT_RESP")
+    # redirect during WAIT_RESP, sampled on the next rising edge
     dut.PCSrcE.value = 1
     dut.PCTargetE.value = target
     await FallingEdge(dut.clk)
     dut.PCSrcE.value = 0
+    assert int(dut.ctrl.State.value) == WAIT_RESP, "left WAIT_RESP before the response"
+    assert dut.ctrl.DiscardF.value == 1, "outstanding response not marked stale"
     pc, instr = await wait_valid(dut)
     assert pc == target, f"PCF={hex(pc)}, expected {hex(target)}"
     assert instr == imem_word(target), "stale response was not discarded"

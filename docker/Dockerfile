@@ -8,8 +8,9 @@
 #
 # Changes from upstream:
 #   * keeps the RISC-V compiler and openFPGALoader (upstream uses
-#     --minimal, which skips both); cocotb/Verilator are still left out
-#     because the installer pins cocotb 1.9, while HIPV needs >= 2.0
+#     --minimal, which skips both)
+#   * adds Verilator and cocotb for the testbenches separately: the
+#     installer's own simulation step pins cocotb 1.9, HIPV needs >= 2.0
 #   * the in-container user takes the host's UID/GID (build args), so
 #     files written to the mounted repo belong to you
 #   * the installer is fetched from a pinned upstream commit, checksummed
@@ -22,9 +23,16 @@ FROM ubuntu:22.04
 
 LABEL description="HIPV SoC: Anvil/F4PGA Artix-7 flow, RISC-V toolchain, openFPGALoader"
 
-ENV DEBIAN_FRONTEND=noninteractive
+# Never prompt during apt. The time zone is preset because tzdata, pulled
+# in by the installer's own apt step, otherwise stops to ask for a
+# geographical area.
+ENV DEBIAN_FRONTEND=noninteractive \
+    TZ=Etc/UTC
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN ln -fs /usr/share/zoneinfo/$TZ /etc/localtime \
+    && echo "$TZ" > /etc/timezone \
+    && apt-get update && apt-get install -y --no-install-recommends \
+    tzdata \
     sudo \
     ca-certificates \
     curl \
@@ -60,7 +68,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Non-root user with the host's UID/GID. The installer refuses to run as
 # root, and `anvil program` calls openFPGALoader through sudo, so the
-# user gets passwordless sudo. If the host GID already names a group in
+# user gets passwordless sudo, keeping DEBIAN_FRONTEND and TZ (sudo resets
+# the environment by default, which brings the tzdata prompt back for the
+# installer's `sudo apt-get`). If the host GID already names a group in
 # the image (e.g. 20 = staff on macOS, dialout on Ubuntu), reuse it.
 # The installer writes an openFPGALoader udev rule, and that directory
 # does not exist without udev (the rule goes unused: the host's apply).
@@ -72,6 +82,7 @@ RUN if ! getent group "${HOST_GID}" >/dev/null; then \
     && useradd --create-home --shell /bin/bash \
        -u "${HOST_UID}" -g "${HOST_GID}" developer \
     && echo 'developer ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/developer \
+    && echo 'Defaults env_keep += "DEBIAN_FRONTEND TZ"' >> /etc/sudoers.d/developer \
     && chmod 0440 /etc/sudoers.d/developer \
     && mkdir -p /etc/udev/rules.d
 
@@ -96,7 +107,33 @@ RUN chmod +x install.sh \
     && ./install.sh --no-sim --no-test \
     && rm install.sh
 
-ENV PATH="/home/developer/.local/bin:/home/developer/opt/sv2v:/home/developer/miniconda3/bin:${PATH}"
+# Simulation: Verilator >= 5.036 (cocotb 2.x needs it; Ubuntu 22.04 ships
+# 4.038) built from source into /usr/local. Kept after the installer so
+# changing it does not invalidate that long layer.
+ARG VERILATOR_VERSION=v5.048
+RUN sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends \
+       autoconf help2man perl libfl2 libfl-dev \
+    && sudo rm -rf /var/lib/apt/lists/* \
+    && git clone --depth 1 --branch "${VERILATOR_VERSION}" \
+       https://github.com/verilator/verilator /tmp/verilator \
+    && cd /tmp/verilator \
+    && autoconf && ./configure && make -j"$(nproc)" && sudo make install \
+    && cd / && rm -rf /tmp/verilator \
+    && verilator --version
+
+# cocotb 2.x + pytest (keep in sync with requirements.txt) in a venv on
+# the system Python. Its bin/ goes first on PATH, so `python3` and
+# `cocotb-config` resolve here; anvil activates its conda env by itself.
+# python3-dev provides libpython3.10.so, which the simulator embeds.
+RUN sudo apt-get update \
+    && sudo apt-get install -y --no-install-recommends python3-dev \
+    && sudo rm -rf /var/lib/apt/lists/* \
+    && /usr/bin/python3 -m venv /home/developer/opt/verif \
+    && /home/developer/opt/verif/bin/pip install --no-cache-dir --upgrade pip \
+    && /home/developer/opt/verif/bin/pip install --no-cache-dir "cocotb>=2.0" pytest
+
+ENV PATH="/home/developer/opt/verif/bin:/home/developer/.local/bin:/home/developer/opt/sv2v:/home/developer/miniconda3/bin:${PATH}"
 
 SHELL ["/bin/bash", "-c"]
 
