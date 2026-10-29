@@ -13,5 +13,5 @@ module adder #(parameter WIDTH = 8) (
   // Y = A + B
   //   - one continuous assignment (assign)
   //   - result is WIDTH bits, the carry out is dropped
-
+  assign Y = A + B;
 endmodule

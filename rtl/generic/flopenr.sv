@@ -16,5 +16,11 @@ module flopenr #(parameter WIDTH = 8) (
   //   - reset (active-high, synchronous): Q <= all zeros ('0)
   //   - else if en:                       Q <= D
   //   - otherwise Q keeps its value (no else branch needed)
-
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      Q <= '0;
+    end else if (en) begin
+      Q <= D;
+    end
+  end
 endmodule

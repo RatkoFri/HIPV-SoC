@@ -32,17 +32,23 @@ module ifu (input  logic        clk, reset,
             input  logic [31:0] ObiRdataF);
 
   // 0. Internal signals: PCNextF [31:0], PCEnF, InstrEnF
-
+     
+    logic [31:0] PCNextF;
+    logic PCEnF, InstrEnF;
   // 1. Fetch control FSM: ifuctrl "ctrl"
   //    - inputs:  ObiGntF, ObiRvalidF, ReadyD, PCSrcE
   //    - outputs: ObiReqF, PCEnF, InstrEnF, ValidF
-
+  ifuctrl ctrl ( .clk(clk), .reset(reset),
+                  .ObiGntF(ObiGntF), .ObiRvalidF(ObiRvalidF),
+                  .ReadyD(ReadyD), .PCSrcE(PCSrcE),
+                  .ObiReqF(ObiReqF), .PCEnF(PCEnF),
+                  .InstrEnF(InstrEnF), .ValidF(ValidF) );
   // 2. Next PC: pcmux (mux2)
   //      PCSrcE = 0 -> PCPlus4F, PCSrcE = 1 -> PCTargetE  => PCNextF
-
+  mux2 #(32) pcmux ( .D0(PCPlus4F), .D1(PCTargetE), .S(PCSrcE), .Y(PCNextF) );
   // 3. PC register: pcreg (flopenr #(32)), enable PCEnF, PCNextF -> PCF
   //    (reset value 0 = reset vector)
-
+  
   // 4. Sequential PC: pcadd4 (adder #(32)), PCF + 32'd4 -> PCPlus4F
 
   // 5. Instruction register: instrreg (flopenr #(32)),

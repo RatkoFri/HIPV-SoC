@@ -1,0 +1,56 @@
+{
+  "extensionVersion": "1.5.4",
+  "fileName": "/Users/ratko.pilipovic/Documents/Repositories/HIPV-SoC/docs/lectures_code/intro2PA/tb.vcd",
+  "markerTime": null,
+  "altMarkerTime": null,
+  "displayTimeUnit": "ps",
+  "selectedSignal": {
+    "name": "mux4to1_tb.uut.O",
+    "msb": -1,
+    "lsb": -1
+  },
+  "zoomRatio": 0.01368893814086914,
+  "scrollLeft": 0,
+  "defaultPixelTime": 10000,
+  "displayedSignals": [
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 3,
+      "name": "mux4to1_tb.uut.I",
+      "numberFormat": "hexadecimal",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "I",
+      "renderType": "multiBit",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 4,
+      "name": "mux4to1_tb.uut.S",
+      "numberFormat": "hexadecimal",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "S",
+      "renderType": "multiBit",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 5,
+      "name": "mux4to1_tb.uut.O",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "O",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    }
+  ]
+}

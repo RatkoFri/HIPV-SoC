@@ -51,7 +51,7 @@ module hipv_core (input  logic        clk, reset,
   //               in a lint_off/lint_on UNUSEDSIGNAL pair), RegWriteW,
   //               RdW [4:0], ResultW [31:0]
   //    hazard:    ForwardAE, ForwardBE                         [1:0]
-
+  
   // 2. Fetch: ifu "ifu"
   //    - handshake ReadyD/ValidF, redirect PCSrcE/PCTargetE
   //    - outputs InstrF, PCF, PCPlus4F

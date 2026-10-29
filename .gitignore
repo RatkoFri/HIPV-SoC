@@ -5,7 +5,7 @@ sim_build/
 results.xml
 __pycache__/
 *.pyc
-
+*.out
 
 # synthesis / fpga build outputs
 fpga/build/

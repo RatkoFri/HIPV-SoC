@@ -15,5 +15,5 @@ module mux2 #(parameter WIDTH = 8) (
   //   S = 0 -> Y = D0
   //   S = 1 -> Y = D1
   //   - one continuous assignment with the conditional operator ( ? : )
-
+  assign Y = S ? D1 : D0;
 endmodule
