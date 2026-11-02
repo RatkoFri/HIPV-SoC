@@ -27,13 +27,23 @@ module ifuctrl (input  logic clk, reset,
 
   // 0. State type: typedef enum logic [1:0] {REQUEST, WAIT_RESP, DONE} statetype
   //    Signals: State, NextState (statetype); DiscardF, NextDiscardF (logic)
-
-
+  typedef enum logic [1:0] { REQUEST, WAIT_RSP, DONE } statetype;
+  //typedef enum logic [2:0] { REQUEST=1, WAIT_RESPONSE=2, DONE=4 } statetype;
+  statetype NextState, State;
+  logic DiscardF, NextDiscardF;
 
   // 1. State register (always_ff), holds both State and DiscardF:
   //      reset -> State = REQUEST, DiscardF = 0
   //      else  -> State <= NextState, DiscardF <= NextDiscardF
-  
+  always_ff @( posedge clk ) begin : StateReg
+    if (reset) begin
+      State <= REQUEST;
+      DiscardF <= 0;
+    end else begin
+      State <= NextState;
+      DiscardF <= NextDiscardF;
+    end
+  end
 
   // 2. Next state logic (always_comb case (State))
   //      defaults: NextState = State, NextDiscardF = DiscardF (hold)
@@ -48,13 +58,46 @@ module ifuctrl (input  logic clk, reset,
   //                                (a redirect makes the outstanding response stale)
   //      DONE:      if (PCSrcE | ReadyD) NextState = REQUEST
  
+  always_comb begin : NextStateLogic
+    NextState = State;
+    NextDiscardF = DiscardF;
+    case (State)
+      REQUEST: begin
+        NextState = ObiGntF ? WAIT_RSP : REQUEST;
+        NextDiscardF = (PCSrcE & ObiGntF) ? 1'b1 : DiscardF;  
+      end 
+      WAIT_RSP: begin
+        if (ObiRvalidF) begin
+          if (PCSrcE | DiscardF) begin
+            NextDiscardF = 0; 
+            NextState = REQUEST;
+          end else begin
+            NextState = DONE;
+          end
+        end else begin
+          if (PCSrcE) begin
+            NextDiscardF = 1;
+          end
+        end 
+      end
+      DONE: begin
+        if (PCSrcE | ReadyD) begin
+          NextState = REQUEST;
+        end
+      end
+      default: 
+    endcase
+  end
 
   // 3. Outputs
   //      ObiReqF  = in REQUEST
   //      PCEnF    = PCSrcE, or (in DONE and ReadyD)
   //      InstrEnF = in WAIT_RESP & ObiRvalidF & ~DiscardF & ~PCSrcE
   //      ValidF   = in DONE & ~PCSrcE
-
-
+  assign ObiReqF = State == REQUEST;
+  assign PCEnF = (State == DONE & ReadyD) | PCSrcE;
+  assign InstrEnF = (State == WAIT_RSP) & ~PCSrcE & ~DiscardF;
+  assign ValidF =    (State == DONE & ~PCSrcE);
+ 
 
 endmodule
