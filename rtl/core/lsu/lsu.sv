@@ -49,7 +49,7 @@ module lsu (input  logic        clk, reset,
 
   import hipv_pkg::*;
 
-  logic        ValidMReg, EnEM, MemOpM, DoneM, WaitRespM, CaptureM;
+  logic        ValidMReg, EnEM, MemOpM, MemReqM, DoneM, CaptureM;
   logic        RegWriteMReg, MemWriteM;
   logic [2:0]  Funct3M;
   logic [31:0] WriteDataM, ReadRawM, ReadShiftM;
@@ -76,19 +76,11 @@ module lsu (input  logic        clk, reset,
                         .D({RegWriteE, MemWriteE, ResultSrcE}),
                         .Q({RegWriteMReg, MemWriteM, ResultSrcM}));
 
-  // OBI transaction control: one outstanding request per instruction
-  assign ObiReqM  = ValidMReg & MemOpM & ~DoneM & ~WaitRespM;
-  assign CaptureM = WaitRespM & ObiRvalidM;
-
-  always_ff @(posedge clk)
-    if (reset) WaitRespM <= 1'b0;
-    else if (~WaitRespM & ObiReqM & ObiGntM) WaitRespM <= 1'b1;
-    else if (CaptureM) WaitRespM <= 1'b0;
-
-  always_ff @(posedge clk)
-    if (reset) DoneM <= 1'b0;
-    else if (EnEM) DoneM <= 1'b0;
-    else if (CaptureM) DoneM <= 1'b1;
+  // OBI transaction control FSM: one outstanding request per instruction
+  assign MemReqM = ValidMReg & MemOpM;
+  lsuctrl ctrl(.clk(clk), .reset(reset), .MemReqM(MemReqM),
+               .ObiGntM(ObiGntM), .ObiRvalidM(ObiRvalidM), .ReadyW(ReadyW),
+               .ObiReqM(ObiReqM), .CaptureM(CaptureM), .DoneM(DoneM));
 
   // raw read data register
   flopenr #(32) rawreg(.clk(clk), .reset(reset), .en(CaptureM), .D(ObiRdataM), .Q(ReadRawM));

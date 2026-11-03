@@ -16,6 +16,7 @@ VERILOG_SOURCES = $(TOPLEVEL_DIR)/config/hipv_pkg.sv \
                   $(TOPLEVEL_DIR)/rtl/core/ieu/alu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/ieu/branchcmp.sv \
                   $(TOPLEVEL_DIR)/rtl/core/ieu/ieu.sv \
+                  $(TOPLEVEL_DIR)/rtl/core/lsu/lsuctrl.sv \
                   $(TOPLEVEL_DIR)/rtl/core/lsu/lsu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/wbu/wbu.sv \
                   $(TOPLEVEL_DIR)/rtl/core/hazard/hazard.sv \

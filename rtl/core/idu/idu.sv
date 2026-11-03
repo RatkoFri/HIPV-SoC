@@ -46,12 +46,11 @@ module idu (input  logic        clk, reset,
   assign EnFD   = ValidF & ReadyD;
   assign ValidD = ValidDReg & ~PCSrcE;
 
-  // F/D valid bit, cleared by a flush
+  // F/D valid bit; a flush clears it through ValidF (gated by PCSrcE in
+  // ifuctrl), since PCSrcE implies ReadyE and therefore ReadyD
   always_ff @(posedge clk)
     if (reset) ValidDReg <= 1'b0;
     else if (ReadyD) ValidDReg <= ValidF;
-    //else if (PCSrcE) ValidDReg <= 1'b0;
-    //else if (ReadyD) ValidDReg <= ValidF;
 
   // F/D pipeline registers
   flopenr #(32) instrreg(.clk(clk), .reset(reset), .en(EnFD), .D(InstrF), .Q(InstrD));
