@@ -91,18 +91,24 @@ conversion path.
 Pin assignments in `fpga/anvil/Nexys-A7-100T-Master.xdc` are taken from the Digilent
 master XDC shipped with Anvil.
 
-> **Clock frequency.** The SoC clock is **50 MHz**. Three things must agree on that
-> number:
+> **Clock frequency.** Two different numbers both matter here, and they are not the
+> same thing:
 >
-> - the XDC constraint (`create_clock -period 20.00`), which timing analysis checks;
-> - `CPU_HZ` in `sw/rules.mk` (default `50000000`), from which the BSP computes the UART
->   divider and delays;
-> - the clock in the `tb/fpga` testbench (20 ns).
+> - **The physical clock reaching the SoC is 100 MHz.** `top.sv` feeds the Nexys A7's
+>   on-board oscillator (`CLK100MHZ`, pin E3) straight into the SoC with no divider.
+>   `CPU_HZ` in `sw/rules.mk` and `sw/bsp/bsp.h` (default `100000000`) must match this —
+>   it is what the BSP uses to compute the UART divider and delays.
+> - **The XDC's `create_clock -period 20.00` (50 MHz) is only a timing-closure
+>   target**, not an actual divider — it tells place/route what margin to verify,
+>   while the silicon still toggles every 10 ns. A 100 MHz *constraint* (10 ns) was
+>   tried and does not close timing, which is why the constraint stays at 50 MHz even
+>   though the real clock is faster; see `KnownBugs.md` (`BUG-CLOCK`) for the
+>   consequences of that gap.
 >
-> A 100 MHz configuration (10 ns) was tried and does not meet timing.
->
-> If the UART is garbled at the configured baud rate but readable at twice that rate,
-> the SoC clock is not what `CPU_HZ` says.
+> `CPU_HZ` previously defaulted to `50000000` to match the XDC constraint instead of
+> the real clock, which halved every baud rate and delay on hardware: readable UART
+> output needed the terminal set to **twice** the configured baud. If that symptom
+> ever reappears, `CPU_HZ` has drifted from the real clock again.
 
 ## Build flow
 
@@ -157,10 +163,13 @@ testbench, and both are easy to trip over:
 ## Things to expect on first bring-up
 
 - **Baud rate.** The BSP computes the UART divider as `CPU_HZ / BAUD`, rounded down to
-  a multiple of 16 (the receiver oversamples ×16). The defaults (`CPU_HZ=50000000`,
-  `BAUD=19200`) give 2592 clock cycles per bit, 0.5 % off 19200 baud. Set the terminal
-  to 19200 8N1. A `CPU_HZ` that doesn't match the real clock garbles every character.
-- **Timing closure.** The design meets the 20 ns (50 MHz) constraint; 100 MHz does not
+  a multiple of 16 (the receiver oversamples ×16). The defaults (`CPU_HZ=100000000`,
+  `BAUD=19200`) give 5200 clock cycles per bit, 0.16 % off 19200 baud. Set the terminal
+  to 19200 8N1. A `CPU_HZ` that doesn't match the real clock garbles every character —
+  readable at exactly double the configured baud is the signature of `CPU_HZ` being
+  half the real clock (see `KnownBugs.md`, `BUG-CLOCK`).
+- **Timing closure.** The design meets the 20 ns (50 MHz) *constraint* used for
+  synthesis closure; a 100 MHz constraint does not
   close. The likely critical path is the crossbar's combinational grant path into the
   RAM.
 - **Reset button.** `CPU_RESETN` is active-low, and is the red button, not one of

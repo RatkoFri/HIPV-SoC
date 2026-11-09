@@ -36,7 +36,14 @@ Usage:
                                               # build, then flash
     scripts/anvil_flow.py prepare            # stop after flattening
     scripts/anvil_flow.py build --firmware sw/examples/hello/build/hello.hex
+    scripts/anvil_flow.py build --board nexys-50t   # target the 50T instead
     scripts/anvil_flow.py build --keep       # do not wipe first (debugging)
+
+--board picks the target device (default: nexys-100t, matching
+fpga/anvil/config.json). The part/target/ofl_board fields that go with it
+are read from Anvil's own boards.json (next to the anvil tool), so a board
+Anvil doesn't know about is rejected up front rather than failing deep into
+synthesis.
 """
 
 import argparse
@@ -111,6 +118,21 @@ RTL = [
 
 DEFAULT_FIRMWARE = "sw/examples/hello/build/hello.hex"
 
+# Short --board keys -> the board name Anvil's boards.json uses. Add an
+# entry here (and a matching *-Master.xdc in fpga/anvil/) for any other
+# board Anvil supports.
+BOARD_NAMES = {
+    "nexys-100t": "Nexys-A7-100T",
+    "nexys-50t": "Nexys-A7-50T",
+}
+DEFAULT_BOARD = "nexys-100t"
+
+# Fields copied from boards.json's entry for the chosen board into the
+# scratch project's config.json. "board" and "description" are cosmetic;
+# the rest select the part/constraints anvil build/program actually use.
+BOARD_CONFIG_FIELDS = ("target", "partname", "device", "ofl_board", "xdc",
+                       "description")
+
 
 def die(msg):
     sys.exit(f"[ERROR] {msg}")
@@ -125,6 +147,16 @@ def find_tool(name, extra=()):
         if os.path.isfile(cand):
             return cand
     return None
+
+
+def load_board_db(anvil_path):
+    """Anvil's own board->part/target/xdc table, next to the anvil tool."""
+    boards_json = os.path.join(os.path.dirname(os.path.realpath(anvil_path)),
+                                "boards.json")
+    if not os.path.isfile(boards_json):
+        return None
+    with open(boards_json) as f:
+        return json.load(f)
 
 
 def check_unique_basenames(paths):
@@ -146,7 +178,7 @@ def run(cmd, cwd=None, quiet=False):
         die(f"command failed with exit {result.returncode}: {' '.join(cmd)}")
 
 
-def prepare(work, firmware, sv2v, keep=False):
+def prepare(work, firmware, sv2v, board=None, board_db=None, keep=False):
     """Wipe the scratch project, flatten, convert, and assemble it."""
     if not keep and os.path.isdir(work):
         shutil.rmtree(work)
@@ -193,6 +225,25 @@ def prepare(work, firmware, sv2v, keep=False):
     with open(os.path.join(PROJECT, "config.json")) as f:
         config = json.load(f)
     config["modules"] = []
+
+    if board and board != config.get("board"):
+        if not board_db:
+            die("boards.json not found next to the anvil tool; cannot "
+                f"look up board '{board}'")
+        if board not in board_db:
+            die(f"unknown board '{board}'; anvil knows: "
+                + ", ".join(sorted(board_db)))
+        entry = board_db[board]
+        config["board"] = board
+        for field in BOARD_CONFIG_FIELDS:
+            if field in entry:
+                config[field] = entry[field]
+        xdc_path = os.path.join(PROJECT, config["xdc"])
+        if not os.path.isfile(xdc_path):
+            die(f"no constraints file for board '{board}': {xdc_path}\n"
+                f"        add fpga/anvil/{config['xdc']}")
+        print(f"  board: {board} ({config.get('description', '')})")
+
     with open(os.path.join(work, "config.json"), "w") as f:
         json.dump(config, f, indent=2)
         f.write("\n")
@@ -229,6 +280,8 @@ def main():
                     help="scratch project directory (wiped every run)")
     ap.add_argument("--firmware", default=DEFAULT_FIRMWARE,
                     help="program image to bake in (default: %(default)s)")
+    ap.add_argument("--board", default=DEFAULT_BOARD, choices=sorted(BOARD_NAMES),
+                    help="target board (default: %(default)s)")
     ap.add_argument("--sv2v", help="path to sv2v")
     ap.add_argument("--anvil", help="path to anvil")
     ap.add_argument("--keep", action="store_true",
@@ -265,7 +318,10 @@ def main():
     if not sv2v:
         die("sv2v not found. Install it (see the Anvil docs) or pass --sv2v.")
 
-    work = prepare(args.work, args.firmware, sv2v, keep=args.keep)
+    board_db = load_board_db(anvil)
+    work = prepare(args.work, args.firmware, sv2v,
+                   board=BOARD_NAMES[args.board], board_db=board_db,
+                   keep=args.keep)
 
     if args.action == "prepare":
         print(f"\nprepared. To build by hand:\n  cd {os.path.relpath(work)} "

@@ -30,9 +30,13 @@ RAM_WORDS ?= 16384
 
 # Core clock and UART baud rate. Both are compiled into the program, and
 # the simulation needs the resulting divider to decode the serial stream.
-# CPU_HZ must be the frequency of the SoC clock: 50 MHz, the period the
-# XDC constrains (see docs/FPGA.md).
-CPU_HZ ?= 50000000
+# CPU_HZ must be the frequency actually reaching the SoC's clock pin: the
+# Nexys A7's on-board oscillator (CLK100MHZ, pin E3) drives it directly
+# with no divider, i.e. 100 MHz, even though the XDC's timing constraint
+# targets 20 ns/50 MHz for synthesis closure (see docs/FPGA.md). Getting
+# this wrong doesn't fail the build — it halves or doubles every baud
+# rate and delay on real hardware.
+CPU_HZ ?= 100000000
 BAUD   ?= 19200
 # the BSP rounds the divider down to a multiple of 16 (receiver oversampling)
 UART_DIV := $(shell echo $$(( ($(CPU_HZ) / $(BAUD)) & ~15 )))
@@ -103,8 +107,8 @@ dump: $(BUILD)/$(PROG).lst
 
 # Run this program on the SoC testbench and print what it sends over the
 # UART. EXPECT="..." makes the run assert on the exact output.
-# at 19200 baud and 50 MHz one character takes 26000 cycles
-RUN_CYCLES ?= 2000000
+# at 19200 baud and 100 MHz one character takes ~52000 cycles
+RUN_CYCLES ?= 4000000
 # a golden file next to the example turns `make run` into a regression
 EXPECT_FILE ?= $(wildcard expected.txt)
 run: $(BUILD)/$(PROG).hex
