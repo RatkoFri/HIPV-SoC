@@ -72,7 +72,7 @@ module ieu (input  logic        clk, reset,
   // While an instruction waits in E, refresh its register operands with
   // the forwarded values: the producer can retire from W (and stop being
   // forwarded) before this instruction leaves E.
-  assign HoldE = ValidEReg & ~ReadyE;
+  assign HoldE = ValidEReg & ~ReadyM;
   mux2 #(32) rd1mux(.D0(FwdAE), .D1(RD1D), .S(EnDE), .Y(RD1NextE));
   mux2 #(32) rd2mux(.D0(WriteDataE), .D1(RD2D), .S(EnDE), .Y(RD2NextE));
   flopenr #(32) rd1reg(.clk(clk), .reset(reset), .en(EnDE | HoldE), .D(RD1NextE), .Q(RD1E));

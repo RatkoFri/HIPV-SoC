@@ -3,7 +3,8 @@
 The LSU holds the E/M pipeline register and executes memory accesses over the OBI data
 port. Non-memory instructions pass through in a single cycle; loads and stores run one
 OBI transaction and hold the stage (`ReadyM = 0` toward Execute) until the response
-arrives. File: `rtl/core/lsu/lsu.sv`. Testbench: `tb/unit/lsu/`.
+arrives. Files: `rtl/core/lsu/lsu.sv` (structural stage), `rtl/core/lsu/lsuctrl.sv`
+(OBI control FSM). Testbench: `tb/unit/lsu/`.
 
 ## Ports (summary)
 
@@ -24,9 +25,17 @@ instructions, completion-gated for memory ones.
 access — this is what makes a dedicated load-use stall unnecessary (see
 `docs/HAZARD.md`).
 
-The OBI transaction control is two flags: `WaitRespM` (between grant and rvalid) and
-`DoneM` (response consumed, cleared when the next instruction loads). One transaction
-per instruction, one outstanding at most.
+The OBI transaction control is the FSM `lsuctrl`, the counterpart of `ifuctrl` in the
+IFU. One transaction per instruction, one outstanding at most:
+
+| State       | Output                                   | Leaves when                  |
+|-------------|------------------------------------------|------------------------------|
+| `IDLE`      | `ObiReqM = MemReqM` (Mealy)              | `MemReqM & ObiGntM` → `WAIT_RESP` |
+| `WAIT_RESP` | `CaptureM = ObiRvalidM` (loads `rawreg`) | `ObiRvalidM` → `DONE`        |
+| `DONE`      | `DoneM = 1` (opens `ValidM`)             | `ReadyW` → `IDLE`            |
+
+`MemReqM = ValidMReg & MemOpM`: non-memory instructions never leave `IDLE`. The request
+is a Mealy output, so it goes out in the first cycle the instruction is in M.
 
 ## Alignment and sizes
 

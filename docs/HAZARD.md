@@ -48,7 +48,7 @@ add  x3, x1, x0    # waits in E; x1 is forwarded from W for one cycle only
 
 The IEU therefore refreshes its D/E operand registers (`RD1E`, `RD2E`) with the
 forwarded values (`FwdAE`, `WriteDataE`) in every cycle the instruction is held
-(`HoldE = ValidEReg & ~ReadyE`). Whatever was forwarded last before the producer
+(`HoldE = ValidEReg & ~ReadyM`). Whatever was forwarded last before the producer
 retired is kept. A value forwarded from a load that hasn't finished yet is
 overwritten by a later refresh, once the data is there. `tb/core` test
 `test_forward_while_stalled` covers this case.

@@ -1,16 +1,16 @@
 {
-  "extensionVersion": "1.5.4",
-  "fileName": "/Users/ratko.pilipovic/Library/CloudStorage/OneDrive-UniverzavLjubljani/Predmeti/DN/2026_27/HIPV/tb/unit/ifu/dump.vcd",
-  "markerTime": 555005,
+  "extensionVersion": "1.6.0",
+  "fileName": "/Users/ratko.pilipovic/Documents/Repositories/HIPV-SoC/tb/unit/ifu/dump.vcd",
+  "markerTime": 40000,
   "altMarkerTime": null,
   "displayTimeUnit": "ps",
   "selectedSignal": {
-    "name": "ifu.PCF",
-    "msb": 31,
-    "lsb": 0
+    "name": "ifu.InstrEnF",
+    "msb": -1,
+    "lsb": -1
   },
-  "zoomRatio": 0.005797580588166947,
-  "scrollLeft": 469112,
+  "zoomRatio": 0.013313013435253887,
+  "scrollLeft": 0,
   "defaultPixelTime": 1000000,
   "displayedSignals": [
     {
@@ -118,6 +118,19 @@
         },
         {
           "dataType": "netlist-variable",
+          "netlistId": 28,
+          "name": "ifu.PCNextF",
+          "numberFormat": "hexadecimal",
+          "colorIndex": 0,
+          "rowHeight": 1,
+          "verticalScale": 1,
+          "nameType": "fullPath",
+          "customName": "PCNextF",
+          "renderType": "multiBit",
+          "valueLinkEnable": false
+        },
+        {
+          "dataType": "netlist-variable",
           "netlistId": 21,
           "name": "ifu.PCF",
           "numberFormat": "hexadecimal",
@@ -143,6 +156,19 @@
           "valueLinkEnable": false
         }
       ]
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 20,
+      "name": "ifu.InstrF",
+      "numberFormat": "hexadecimal",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "InstrF",
+      "renderType": "multiBit",
+      "valueLinkEnable": false
     },
     {
       "dataType": "signal-group",
@@ -252,6 +278,19 @@
       "verticalScale": 1,
       "nameType": "fullPath",
       "customName": "PCEnF",
+      "renderType": "binary",
+      "valueLinkEnable": false
+    },
+    {
+      "dataType": "netlist-variable",
+      "netlistId": 30,
+      "name": "ifu.InstrEnF",
+      "numberFormat": "binary",
+      "colorIndex": 0,
+      "rowHeight": 1,
+      "verticalScale": 1,
+      "nameType": "fullPath",
+      "customName": "InstrEnF",
       "renderType": "binary",
       "valueLinkEnable": false
     }

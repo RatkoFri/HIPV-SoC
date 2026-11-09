@@ -10,6 +10,9 @@
 //          A redirect (PCSrcE) loads the PC with the branch target,
 //          kills ValidF and marks any outstanding response as stale
 //          (DiscardF) so it is dropped when it arrives.
+//          State and DiscardF are both held in the same current/next
+//          pair, so the decision in WAIT_RESP is taken on the current
+//          DiscardF while its clear is scheduled for the next cycle.
 //          Simplification: a redirect during REQUEST before ObiGntF
 //          changes ObiAddrF while ObiReqF is high; a fully compliant
 //          OBI master would keep the address phase stable.
@@ -25,29 +28,36 @@ module ifuctrl (input  logic clk, reset,
   typedef enum logic [1:0] {REQUEST, WAIT_RESP, DONE} statetype;
 
   statetype State, NextState;
-  logic     DiscardF;
+  logic     DiscardF, NextDiscardF;
 
   // state register
   always_ff @(posedge clk)
-    if (reset) State <= REQUEST;
-    else State <= NextState;
+    if (reset) begin
+      State    <= REQUEST;
+      DiscardF <= 1'b0;
+    end else begin
+      State    <= NextState;
+      DiscardF <= NextDiscardF;
+    end
 
   // next state logic
-  always_comb
+  always_comb begin
+    NextState    = State;  // defaults: hold
+    NextDiscardF = DiscardF;
     case (State)
-      REQUEST:   NextState = ObiGntF ? WAIT_RESP : REQUEST;
-      WAIT_RESP: if (ObiRvalidF) NextState = (DiscardF | PCSrcE) ? REQUEST : DONE;
-                 else NextState = WAIT_RESP;
-      DONE:      NextState = (PCSrcE | ReadyD) ? REQUEST : DONE;
+      // the grant commits the transaction on this edge, so a redirect
+      // in the same cycle already has a wrong-path response coming
+      REQUEST:   begin NextState    = ObiGntF ? WAIT_RESP : REQUEST;
+                       NextDiscardF = ObiGntF & PCSrcE; end
+      // the awaited response clears the flag; with no response yet, a
+      // redirect makes the outstanding one stale
+      WAIT_RESP: if (ObiRvalidF) begin NextState    = (DiscardF | PCSrcE) ? REQUEST : DONE;
+                                       NextDiscardF = 1'b0; end
+                 else NextDiscardF = DiscardF | PCSrcE;
+      DONE:      if (PCSrcE | ReadyD) NextState = REQUEST;
       default:   NextState = REQUEST;
     endcase
-
-  // a redirect while a transaction is outstanding marks its response as stale
-  always_ff @(posedge clk)
-    if (reset) DiscardF <= 1'b0;
-    else if (ObiRvalidF) DiscardF <= 1'b0;
-    else if (PCSrcE & ((State == WAIT_RESP) | ((State == REQUEST) & ObiGntF)))
-      DiscardF <= 1'b1;
+  end
 
   // outputs
   assign ObiReqF  = (State == REQUEST);

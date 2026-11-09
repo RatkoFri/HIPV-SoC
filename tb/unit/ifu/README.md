@@ -60,7 +60,7 @@ make TESTCASE=test_redirect
 | `test_sequential_fetch` | Instructions arrive from 0, 4, 8, ... with `ReadyD` high     |
 | `test_backpressure`     | `ValidF`/outputs hold steady while `ReadyD` is low           |
 | `test_redirect`         | `PCSrcE` pulse fetches from `PCTargetE`, then target + 4     |
-| `test_redirect_midfetch`| Stale response of an in-flight fetch is discarded (delay 4)  |
+| `test_redirect_midfetch`| Redirect in `WAIT_RESP`: `DiscardF` set, stale response dropped |
 | `test_slow_memory`      | Sequential fetch correct with `gnt_delay=2`, `rvalid_delay=3`|
 
 Memory latencies are per-test arguments to `start()`, so new corner cases are added by

@@ -4,6 +4,7 @@ TOPLEVEL = lsu
 MODULE   = test_lsu
 VERILOG_SOURCES = $(TOPLEVEL_DIR)/config/hipv_pkg.sv \
                   $(TOPLEVEL_DIR)/rtl/generic/flopenr.sv \
+                  $(TOPLEVEL_DIR)/rtl/core/lsu/lsuctrl.sv \
                   $(TOPLEVEL_DIR)/rtl/core/lsu/lsu.sv
 
 include $(TOPLEVEL_DIR)/tb/common/Makefile.include
