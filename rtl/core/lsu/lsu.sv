@@ -58,7 +58,7 @@ module lsu (input  logic        clk, reset,
   // E/M handshake: a memory instruction holds the stage until done
   assign MemOpM = MemWriteM | (ResultSrcM == RESULT_MEM);
   assign ValidM = ValidMReg & (~MemOpM | DoneM);
-  assign ReadyM = ~ValidMReg | (ValidM & ReadyW);
+  assign ReadyM = ~ValidMReg | ((~MemOpM | DoneM) & ReadyW);
   assign EnEM   = ValidE & ReadyM;
 
   // E/M valid bit
