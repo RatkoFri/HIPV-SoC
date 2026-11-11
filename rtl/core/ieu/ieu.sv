@@ -25,10 +25,11 @@ module ieu (input  logic        clk, reset,
             input  logic [31:0] RD1D, RD2D, ImmExtD, PCD, PCPlus4D,
             input  logic [4:0]  Rs1D, Rs2D, RdD,
             input  logic [2:0]  Funct3D,
-            input  logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD, MulD,
+            input  logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,
             input  logic [1:0]  ResultSrcD, ALUSrcAD,
             input  logic        ALUSrcBD,
-            input  logic [4:0]  ALUControlD,
+            // HW1 Task 1/2: wider ALUControlD, and the multiply control signal
+            input  logic [3:0]  ALUControlD,
             // forwarding (from the hazard unit and later stages)
             input  logic [1:0]  ForwardAE, ForwardBE,
             input  logic [31:0] ForwardDataM, ResultW,
@@ -48,21 +49,19 @@ module ieu (input  logic        clk, reset,
 
   logic [31:0] RD1E, RD2E, ImmExtE, PCE;
   logic [31:0] FwdAE, SrcAE, SrcBE, PCTargetBaseE, JalrTargetE;
-  logic [31:0] ALUOutE, MulResultE;
-  logic        BranchE, JumpE, JalrE, TakenE, MulE;
+  logic        BranchE, JumpE, JalrE, TakenE;
   logic [1:0]  ALUSrcAE;
   logic        ALUSrcBE;
-  logic [4:0]  ALUControlE;
+  logic [3:0]  ALUControlE;
   logic        EnDE, ValidEReg, HoldE;
   logic [31:0] RD1NextE, RD2NextE;
-  logic        MulStartE, MulBusyE, MulDoneE, ExecDoneE;
 
-  // D/E handshake: accept when the stage is empty or being drained. A
-  // multiply holds the stage until its result is ready (ExecDoneE).
-  assign ExecDoneE = ~MulE | MulDoneE;
-  assign ReadyE    = ~ValidEReg | (ReadyM & ExecDoneE);
-  assign EnDE      = ValidD & ReadyE;
-  assign ValidE    = ValidEReg & ExecDoneE;
+  // D/E handshake: accept when the stage is empty or being drained
+  // HW1 Task 2: a multiply must stay in E until its result is ready, and
+  // must not be offered to the Memory stage before that.
+  assign ReadyE = ~ValidEReg | ReadyM;
+  assign EnDE   = ValidD & ReadyE;
+  assign ValidE = ValidEReg;
 
   // D/E valid bit
   always_ff @(posedge clk)
@@ -73,7 +72,7 @@ module ieu (input  logic        clk, reset,
   // While an instruction waits in E, refresh its register operands with
   // the forwarded values: the producer can retire from W (and stop being
   // forwarded) before this instruction leaves E.
-  assign HoldE = ValidEReg & ~ReadyE;
+  assign HoldE = ValidEReg & ~ReadyM;
   mux2 #(32) rd1mux(.D0(FwdAE), .D1(RD1D), .S(EnDE), .Y(RD1NextE));
   mux2 #(32) rd2mux(.D0(WriteDataE), .D1(RD2D), .S(EnDE), .Y(RD2NextE));
   flopenr #(32) rd1reg(.clk(clk), .reset(reset), .en(EnDE | HoldE), .D(RD1NextE), .Q(RD1E));
@@ -84,10 +83,12 @@ module ieu (input  logic        clk, reset,
   flopenr #(15) regsreg(.clk(clk), .reset(reset), .en(EnDE),
                         .D({Rs1D, Rs2D, RdD}), .Q({Rs1E, Rs2E, RdE}));
   flopenr #(3)  funct3reg(.clk(clk), .reset(reset), .en(EnDE), .D(Funct3D), .Q(Funct3E));
-  flopenr #(16) ctrlreg(.clk(clk), .reset(reset), .en(EnDE),
-                        .D({RegWriteD, MemWriteD, BranchD, JumpD, JalrD, MulD, ResultSrcD,
+  // HW1 Task 1/2: the control register carries ALUControl and the new
+  // multiply control bit; adjust its width
+  flopenr #(14) ctrlreg(.clk(clk), .reset(reset), .en(EnDE),
+                        .D({RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ResultSrcD,
                             ALUSrcAD, ALUSrcBD, ALUControlD}),
-                        .Q({RegWriteE, MemWriteE, BranchE, JumpE, JalrE, MulE, ResultSrcE,
+                        .Q({RegWriteE, MemWriteE, BranchE, JumpE, JalrE, ResultSrcE,
                             ALUSrcAE, ALUSrcBE, ALUControlE}));
 
   // forwarding muxes: register operand / ResultW / ForwardDataM
@@ -99,23 +100,16 @@ module ieu (input  logic        clk, reset,
   mux2 #(32) srcbmux(.D0(WriteDataE), .D1(ImmExtE), .S(ALUSrcBE), .Y(SrcBE));
 
   // ALU and branch comparator (comparator uses the forwarded operands)
-  alu alu(.A(SrcAE), .B(SrcBE), .ALUControl(ALUControlE), .Y(ALUOutE));
+  alu alu(.A(SrcAE), .B(SrcBE), .ALUControl(ALUControlE), .Y(ALUResultE));
 
-  // multiplier: starts only when ReadyM guarantees that the forwarded
-  // operands are resolved (same reason PCSrcE is gated with ReadyM),
-  // captures them, and is acknowledged when the multiply leaves E
-  assign MulStartE = ValidEReg & MulE & ~MulBusyE & ReadyM;
-  mul mu(.clk(clk), .reset(reset), .Start(MulStartE), .Ack(ValidEReg & MulDoneE & ReadyM),
-         .A(SrcAE), .B(SrcBE), .Funct3(Funct3E),
-         .Busy(MulBusyE), .Done(MulDoneE), .Result(MulResultE));
-
-  // the product travels as the ALU result, so forwarding needs no change
-  mux2 #(32) resmux(.D0(ALUOutE), .D1(MulResultE), .S(MulE), .Y(ALUResultE));
+  // HW1 Task 2: instantiate mul here. Decide when it may start (see the
+  // PCSrcE comment in the header), and send its result on to the Memory
+  // stage so that forwarding keeps working.
   branchcmp bcmp(.A(FwdAE), .B(WriteDataE), .Funct3E(Funct3E), .TakenE(TakenE));
 
   // branch/jump target: PC + imm for branch/jal, ALU (rs1 + imm) for jalr
   adder #(32) targetadd(.A(PCE), .B(ImmExtE), .Y(PCTargetBaseE));
-  assign JalrTargetE = {ALUOutE[31:1], 1'b0};
+  assign JalrTargetE = {ALUResultE[31:1], 1'b0};
   mux2 #(32) targetmux(.D0(PCTargetBaseE), .D1(JalrTargetE), .S(JalrE), .Y(PCTargetE));
 
   // redirect, qualified with the valid bit and gated to the retire cycle

@@ -37,8 +37,9 @@ module hipv_core (input  logic        clk, reset,
   logic [2:0]  Funct3D;
   logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD, ALUSrcBD;
   logic [1:0]  ResultSrcD, ALUSrcAD;
-  logic [4:0]  ALUControlD;
-  logic        MulD;
+  // HW1 Task 1/2: wider ALUControlD, and the multiply control signal
+  // between idu and ieu
+  logic [3:0]  ALUControlD;
   // E <-> M
   logic        ValidE, ReadyM;
   logic [31:0] ALUResultE, WriteDataE, PCPlus4E;
@@ -87,8 +88,7 @@ module hipv_core (input  logic        clk, reset,
           .Rs1D(Rs1D), .Rs2D(Rs2D), .RdD(RdD), .Funct3D(Funct3D),
           .RegWriteD(RegWriteD), .MemWriteD(MemWriteD), .BranchD(BranchD),
           .JumpD(JumpD), .JalrD(JalrD), .ResultSrcD(ResultSrcD),
-          .ALUSrcAD(ALUSrcAD), .ALUSrcBD(ALUSrcBD), .ALUControlD(ALUControlD),
-          .MulD(MulD));
+          .ALUSrcAD(ALUSrcAD), .ALUSrcBD(ALUSrcBD), .ALUControlD(ALUControlD));
 
   // Execute
   ieu ieu(.clk(clk), .reset(reset),
@@ -98,7 +98,6 @@ module hipv_core (input  logic        clk, reset,
           .RegWriteD(RegWriteD), .MemWriteD(MemWriteD), .BranchD(BranchD),
           .JumpD(JumpD), .JalrD(JalrD), .ResultSrcD(ResultSrcD),
           .ALUSrcAD(ALUSrcAD), .ALUSrcBD(ALUSrcBD), .ALUControlD(ALUControlD),
-          .MulD(MulD),
           .ForwardAE(ForwardAE), .ForwardBE(ForwardBE),
           .ForwardDataM(ForwardDataM), .ResultW(ResultW),
           .PCSrcE(PCSrcE), .PCTargetE(PCTargetE),
