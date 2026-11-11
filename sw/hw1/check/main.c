@@ -160,6 +160,10 @@ static void check_binary(const char *name, binop_t hw, binop_t ref)
     report(name, bad, NVEC * NVEC, fa, fb, fh, fr);
 }
 
+#ifdef HW1_BONUS
+/* every check_unary() caller is bonus-only (clz/cpop moved there too --
+ * see docs/LectureNotes/HW1.md); without this guard a default build has
+ * no caller left and -Werror=unused-function fails it. */
 static void check_unary(const char *name, unop_t hw, unop_t ref)
 {
     uint32_t bad = 0, fa = 0, fh = 0, fr = 0;
@@ -172,6 +176,7 @@ static void check_unary(const char *name, unop_t hw, unop_t ref)
     }
     report(name, bad, NVEC, fa, 0, fh, fr);
 }
+#endif
 
 int main(void)
 {
@@ -189,10 +194,10 @@ int main(void)
     check_binary("minu",   HW(minu),   ref_minu);
     check_binary("max",    HW(max),    ref_max);
     check_binary("maxu",   HW(maxu),   ref_maxu);
-    check_unary("clz",     HW(clz),    ref_clz);
-    check_unary("cpop",    HW(cpop),   ref_cpop);
 #ifdef HW1_BONUS
     uart_puts("Task 1: bonus\n");
+    check_unary("clz",     HW(clz),    ref_clz);
+    check_unary("cpop",    HW(cpop),   ref_cpop);
     check_unary("ctz",     HW(ctz),    ref_ctz);
     check_unary("sext.b",  HW(sext_b), ref_sext_b);
     check_unary("sext.h",  HW(sext_h), ref_sext_h);

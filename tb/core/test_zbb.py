@@ -56,30 +56,21 @@ async def test_min_max(dut):
 
 
 @cocotb.test()
-async def test_clz_cpop(dut):
-    """clz and cpop, including the all-zero and all-one operands."""
-    singles = [(a, 0) for a in EDGE] + \
-              [(1 << i, 0) for i in range(32)] + \
-              [(RNG.getrandbits(32), 0) for _ in range(8)]
-    await run_vectors(dut, [("clz", clz), ("cpop", cpop)], singles)
-
-
-@cocotb.test()
 async def test_forwarding_chain(dut):
     """New instructions feeding each other back to back (forwarding paths)."""
     a, b = 0x8000FFFF, 0x00F0000F
     r3 = BINARY["andn"](a, b)
     r4 = BINARY["min"](r3, a)
-    r5 = UNARY["clz"](r4)
+    r5 = BINARY["sh1add"](r4, r3)
     r6 = BINARY["sh2add"](r5, r3)
-    r7 = UNARY["cpop"](r6)
+    r7 = BINARY["xnor"](r6, b)
     r8 = BINARY["maxu"](r7, r5)
     instrs = li(1, a) + li(2, b) + [
         andn(3, 1, 2),
         min_(4, 3, 1),
-        clz(5, 4),
+        sh1add(5, 4, 3),
         sh2add(6, 5, 3),
-        cpop(7, 6),
+        xnor(7, 6, 2),
         maxu(8, 7, 5),
         sw(6, 0, 0),
         sw(8, 4, 0),
@@ -127,11 +118,12 @@ async def test_rv32i_still_works(dut):
 
 @cocotb.test(skip=not BONUS)
 async def test_bonus_unary(dut):
-    """ctz, sext.b, sext.h, zext.h, orc.b, rev8."""
+    """clz, cpop, ctz, sext.b, sext.h, zext.h, orc.b, rev8."""
     singles = [(a, 0) for a in EDGE] + \
-              [(1 << i, 0) for i in range(0, 32, 3)] + \
+              [(1 << i, 0) for i in range(32)] + \
               [(RNG.getrandbits(32), 0) for _ in range(8)]
-    await run_vectors(dut, [("ctz", ctz), ("sext.b", sext_b), ("sext.h", sext_h),
+    await run_vectors(dut, [("clz", clz), ("cpop", cpop), ("ctz", ctz),
+                            ("sext.b", sext_b), ("sext.h", sext_h),
                             ("zext.h", zext_h), ("orc.b", orc_b), ("rev8", rev8)],
                       singles)
 

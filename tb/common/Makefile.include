@@ -6,9 +6,18 @@
 # Options:
 #   WAVES=1   enable waveform tracing; dump.vcd is written into the test directory
 #             (use a fresh/clean SIM_BUILD when toggling, the flags change)
+#   VERIF_VENV   venv providing cocotb>=2.0 (default: ~/opt/verif). Its bin/
+#                is put first on PATH so cocotb-config/python3 resolve from
+#                there without needing to `source .../bin/activate` first.
+#                Set VERIF_VENV= (empty) to use whatever's already on PATH.
 
 SIM            ?= verilator
 TOPLEVEL_LANG  ?= verilog
+
+VERIF_VENV ?= $(HOME)/opt/verif
+ifneq ($(and $(VERIF_VENV),$(wildcard $(VERIF_VENV)/bin/cocotb-config)),)
+  export PATH := $(VERIF_VENV)/bin:$(PATH)
+endif
 
 # shared Python testbench utilities (obi.py, rv32i.py)
 export PYTHONPATH := $(TOPLEVEL_DIR)/tb/common:$(PYTHONPATH)

@@ -13,18 +13,37 @@
 package hipv_pkg;
 
   // ALU operation encoding (ALUControl)
-  // HW1 Task 1: widen the codes and add the new operations here. Keep the
-  // values of the existing codes: tb/unit/idu and tb/unit/ieu use them.
-  localparam logic [3:0] ALU_ADD  = 4'b0000;
-  localparam logic [3:0] ALU_SUB  = 4'b0001;
-  localparam logic [3:0] ALU_SLL  = 4'b0010;
-  localparam logic [3:0] ALU_SLT  = 4'b0011;
-  localparam logic [3:0] ALU_SLTU = 4'b0100;
-  localparam logic [3:0] ALU_XOR  = 4'b0101;
-  localparam logic [3:0] ALU_SRL  = 4'b0110;
-  localparam logic [3:0] ALU_SRA  = 4'b0111;
-  localparam logic [3:0] ALU_OR   = 4'b1000;
-  localparam logic [3:0] ALU_AND  = 4'b1001;
+  localparam logic [4:0] ALU_ADD  = 5'b00000;
+  localparam logic [4:0] ALU_SUB  = 5'b00001;
+  localparam logic [4:0] ALU_SLL  = 5'b00010;
+  localparam logic [4:0] ALU_SLT  = 5'b00011;
+  localparam logic [4:0] ALU_SLTU = 5'b00100;
+  localparam logic [4:0] ALU_XOR  = 5'b00101;
+  localparam logic [4:0] ALU_SRL  = 5'b00110;
+  localparam logic [4:0] ALU_SRA  = 5'b00111;
+  localparam logic [4:0] ALU_OR   = 5'b01000;
+  localparam logic [4:0] ALU_AND  = 5'b01001;
+  // Zba / Zbb (homework 1, Task 1)
+  localparam logic [4:0] ALU_SH1ADD = 5'b01010;
+  localparam logic [4:0] ALU_SH2ADD = 5'b01011;
+  localparam logic [4:0] ALU_SH3ADD = 5'b01100;
+  localparam logic [4:0] ALU_ANDN   = 5'b01101;
+  localparam logic [4:0] ALU_ORN    = 5'b01110;
+  localparam logic [4:0] ALU_XNOR   = 5'b01111;
+  localparam logic [4:0] ALU_MIN    = 5'b10000;
+  localparam logic [4:0] ALU_MINU   = 5'b10001;
+  localparam logic [4:0] ALU_MAX    = 5'b10010;
+  localparam logic [4:0] ALU_MAXU   = 5'b10011;
+  localparam logic [4:0] ALU_CLZ    = 5'b10100;
+  localparam logic [4:0] ALU_CPOP   = 5'b10101;
+  localparam logic [4:0] ALU_CTZ    = 5'b10110;
+  localparam logic [4:0] ALU_SEXTB  = 5'b10111;
+  localparam logic [4:0] ALU_SEXTH  = 5'b11000;
+  localparam logic [4:0] ALU_ZEXTH  = 5'b11001;
+  localparam logic [4:0] ALU_ROL    = 5'b11010;
+  localparam logic [4:0] ALU_ROR    = 5'b11011;
+  localparam logic [4:0] ALU_ORCB   = 5'b11100;
+  localparam logic [4:0] ALU_REV8   = 5'b11101;
 
   // immediate format select (ImmSrc)
   localparam logic [2:0] IMM_I = 3'b000;

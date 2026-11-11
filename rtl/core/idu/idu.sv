@@ -32,11 +32,10 @@ module idu (input  logic        clk, reset,
             output logic [31:0] RD1D, RD2D, ImmExtD, PCD, PCPlus4D,
             output logic [4:0]  Rs1D, Rs2D, RdD,
             output logic [2:0]  Funct3D,
-            output logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD,
+            output logic        RegWriteD, MemWriteD, BranchD, JumpD, JalrD, MulD,
             output logic [1:0]  ResultSrcD, ALUSrcAD,
             output logic        ALUSrcBD,
-            // HW1 Task 1/2: wider ALUControlD, and the multiply control signal
-            output logic [3:0]  ALUControlD);
+            output logic [4:0]  ALUControlD);
 
   logic [31:0] InstrD;
   logic [2:0]  ImmSrcD;
@@ -47,11 +46,12 @@ module idu (input  logic        clk, reset,
   assign EnFD   = ValidF & ReadyD;
   assign ValidD = ValidDReg & ~PCSrcE;
 
-  // F/D valid bit; a flush clears it through ValidF (gated by PCSrcE in
-  // ifuctrl), since PCSrcE implies ReadyE and therefore ReadyD
+  // F/D valid bit, cleared by a flush
   always_ff @(posedge clk)
     if (reset) ValidDReg <= 1'b0;
     else if (ReadyD) ValidDReg <= ValidF;
+    //else if (PCSrcE) ValidDReg <= 1'b0;
+    //else if (ReadyD) ValidDReg <= ValidF;
 
   // F/D pipeline registers
   flopenr #(32) instrreg(.clk(clk), .reset(reset), .en(EnFD), .D(InstrF), .Q(InstrD));
@@ -65,11 +65,11 @@ module idu (input  logic        clk, reset,
   assign Funct3D = InstrD[14:12];
 
   // control decoder
-  // HW1 Task 1: pass the instruction bits the extended decoder needs
-  idudec dec(.OpD(InstrD[6:0]), .Funct3D(Funct3D), .Funct7b5D(InstrD[30]),
+  idudec dec(.OpD(InstrD[6:0]), .Funct3D(Funct3D), .Funct7D(InstrD[31:25]), .Rs2D(Rs2D),
              .RegWriteD(RegWriteD), .ImmSrcD(ImmSrcD), .ALUSrcAD(ALUSrcAD),
              .ALUSrcBD(ALUSrcBD), .MemWriteD(MemWriteD), .ResultSrcD(ResultSrcD),
-             .BranchD(BranchD), .JumpD(JumpD), .JalrD(JalrD), .ALUControlD(ALUControlD));
+             .BranchD(BranchD), .JumpD(JumpD), .JalrD(JalrD), .MulD(MulD),
+             .ALUControlD(ALUControlD));
 
   // register file, written by the Writeback stage
   regfile rf(.clk(clk), .WE3(RegWriteW), .A1(Rs1D), .A2(Rs2D), .A3(RdW),

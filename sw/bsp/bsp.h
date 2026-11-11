@@ -12,12 +12,12 @@
 #include "hipv.h"
 
 /* Core clock frequency in Hz, used to convert baud rates and delays.
- * The default is 100 MHz: the Nexys A7's on-board oscillator drives the
- * SoC directly with no divider, even though the XDC's timing constraint
- * targets 50 MHz for synthesis closure (see "Clock frequency" in
- * docs/FPGA.md). Override at build time with -DCPU_HZ=... */
+ * The default is 25 MHz: top.sv divides the Nexys A7's 100 MHz on-board
+ * oscillator down to the SoC's real operating clock with a fabric FSM
+ * (see "Clock frequency" in docs/FPGA.md). Override at build time with
+ * -DCPU_HZ=... */
 #ifndef CPU_HZ
-#define CPU_HZ 100000000u
+#define CPU_HZ 25000000u
 #endif
 
 /* ---- UART -------------------------------------------------------- */

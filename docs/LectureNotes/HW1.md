@@ -49,8 +49,16 @@ provided".
   ([releases](https://github.com/riscv/riscv-isa-manual/releases)): the chapter on the
   B extension (Zba, Zbb) and the chapter on the M extension (Zmmul).
 
-**Check your setup.** Before you change anything, run the existing testbenches (see
-[Testbenches](#testbenches)). They must pass:
+**Check your setup.** Before you change anything:
+
+```sh
+python3 scripts/check_setup.py     # Verilator, cocotb, pytest, RISC-V GCC
+```
+
+This catches most setup problems in seconds — including a cocotb that's too old
+(the testbenches need the 2.x API) and a RISC-V GCC whose assembler doesn't accept
+`.option arch, +zbb` (needed for Task 1). Then run the existing testbenches (see
+[Testbenches](#testbenches)); they must pass:
 
 ```sh
 cd tb/core && make
@@ -199,7 +207,6 @@ The Makefile selects the test file with `MODULE`:
 | `test_zba` | `sh1add`, `sh2add`, `sh3add` on 12×4 edge-case pairs plus random pairs |
 | `test_logic_with_negate` | `andn`, `orn`, `xnor` on the same pairs |
 | `test_min_max` | `min`, `minu`, `max`, `maxu`; the pairs include operands where signed and unsigned order differ |
-| `test_clz_cpop` | `clz` and `cpop` on 0, all ones, every single-bit value and random values |
 | `test_forwarding_chain` | six new instructions in a row, each using the previous result (forwarding into and out of the new operations) |
 | `test_rv32i_still_works` | the RV32I instructions that share encodings with the new ones: `add`, `sub`, `xor`, `sll`/`srl`/`sra`, `slli`/`srli`/`srai`, `andi`, `ori` |
 
@@ -237,6 +244,19 @@ captures everything the program prints on the UART (`tb/soc/test_sw.py`).
 
 A run simulates 4 million cycles and takes about half a minute.
 
+**Testing on real hardware.** `sw/hw1/check` is the binary to flash to the board —
+`sw/hw1/bench` is simulation/report-only. Build and program it with:
+
+```sh
+make APP=hw1/check all              # build, synthesise, flash
+make APP=hw1/check BONUS=1 all       # the bonus variant
+```
+
+then open a serial terminal at 19200 8N1 (see `docs/FPGA.md`). The program runs
+**once** at boot and stops — it does not loop. If you don't see output (the
+terminal was opened after it already ran, or you want to see it again), press the
+**`CPU_RESETN`** button (the red one) to restart it; you do not need to reflash.
+
 ### Existing SoC and FPGA testbenches (regression)
 
 `tb/soc` (with plain `make`: a small assembly program exercising every peripheral) and
@@ -271,19 +291,23 @@ instructions use opcode `OP` (`0110011`), the others use `OP-IMM` (`0010011`).
 | `minu` | Zbb | OP | `0000101` | rs2 | `101` | unsigned minimum |
 | `max` | Zbb | OP | `0000101` | rs2 | `110` | signed maximum |
 | `maxu` | Zbb | OP | `0000101` | rs2 | `111` | unsigned maximum |
-| `clz` | Zbb | OP-IMM | `0110000` | `00000` | `001` | number of leading zeros (32 for 0) |
-| `cpop` | Zbb | OP-IMM | `0110000` | `00010` | `001` | number of set bits |
+
+`clz` and `cpop` move to the bonus (see [HW1_bonus.md](HW1_bonus.md)): their
+32-iteration priority-encoder/popcount logic is noticeably more expensive to
+build well than the rest of this set, which is either a single level of logic
+or reuses the comparator `slt`/`sltu` already compute.
 
 ### What to change
 
 1. **The decoder.** Today [idudec.sv](../../rtl/core/idu/idudec.sv) only receives
    `funct7[5]`. Every encoding it doesn't recognize silently runs as an RV32I
-   instruction. Assemble a `clz` and work out which RV32I instruction the current core
-   executes instead. Pass the bits you need into `idudec`.
-   - The unary instructions are told apart by the `rs2` field.
-   - Most new instructions share their funct3 with an RV32I instruction (`clz` with
-     `slli`, `andn` with `and`, `xnor` with `xor`, ...). The RV32I instructions must
-     keep working.
+   instruction. Assemble an `andn` and work out which RV32I instruction the current
+   core executes instead. Pass the bits you need into `idudec`.
+   - Most new instructions share their funct3 with an RV32I instruction (`andn`
+     with `and`, `xnor` with `xor`, `minu` with `srl`/`sra`, ...). The RV32I
+     instructions must keep working.
+   - `funct7[5]` alone is not enough: `minu` and `srl` share both funct3 and
+     `funct7[5]` (both 0) — you need more of `funct7` to tell them apart.
 2. **The ALU control signal.** `ALUControl` is 4 bits wide and 10 of the 16 codes are
    used. Widen it.
    - **Keep the existing codes unchanged.** The unit tests in `tb/unit/idu` and
