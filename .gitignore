@@ -15,3 +15,5 @@ syn/build/
 build/
 solutions/
 sw/hw1/
+# local Claude Code context, not published
+CLAUDE.md
