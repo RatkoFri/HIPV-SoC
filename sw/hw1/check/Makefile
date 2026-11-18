@@ -12,8 +12,8 @@ SRCS = main.c
 # objects compiled with other flags
 BUILD       ?= build$(if $(filter 1,$(BONUS)),-bonus)$(if $(filter 1,$(REF)),-ref)
 EXPECT_FILE ?= $(if $(filter 1,$(BONUS)),expected_bonus.txt,expected.txt)
-RUN_CYCLES  ?= 4000000
-BAUD         = 1000000
+RUN_CYCLES  ?= 24000000
+BAUD         = 19200
 
 include ../../rules.mk
 

@@ -4,11 +4,17 @@
 # (xdc/Nexys-A7-100T-Master.xdc); only the pins this design uses are
 # enabled here.
 
-## Clock: 50.00 MHz (20.00 ns) SoC clock. Software must be built with the
-## same frequency (CPU_HZ=50000000, the default in sw/rules.mk).
+## Clock: this pin is the Nexys A7's 100 MHz on-board oscillator,
+## constrained here at its true physical rate. top.sv divides it down
+## to the SoC's real 25 MHz operating clock (SocClk) with a fabric FSM
+## (see top.sv); CPU_HZ in sw/rules.mk must match that 25 MHz, not this
+## port's rate. This toolchain's XDC-to-SDC conversion does not follow
+## a clock through that divider register, so SocClk's own domain isn't
+## independently re-verified by this constraint -- see KnownBugs.md,
+## BUG-CLOCK, for the cross-validation this relies on instead.
 set_property PACKAGE_PIN E3  [get_ports {clk}]
 set_property IOSTANDARD LVCMOS33 [get_ports {clk}]
-create_clock -period 20.00 -name sys_clk [get_ports {clk}]
+create_clock -period 10.00 -name sys_clk [get_ports {clk}]
 
 ## Reset: CPU_RESETN push button (active low)
 set_property PACKAGE_PIN C12 [get_ports {cpu_resetn}]

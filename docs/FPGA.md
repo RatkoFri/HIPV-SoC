@@ -78,7 +78,7 @@ into the bitstream, exactly as `docs/MEMORY.md` intends.
 
 | Concern | What it does |
 |---------|--------------|
-| Clock | The board clock drives the SoC directly. The XDC constrains it at **50.00 MHz** (20.00 ns). See "Clock frequency" below. |
+| Clock | `top.sv` divides the board's 100 MHz oscillator down to the SoC's real 25 MHz operating clock with the CMT's `MMCME2_ADV` + a `BUFG`. The XDC constrains the port itself at its true **100.00 MHz** (10.00 ns). See "Clock frequency" below. |
 | Reset | `CPU_RESETN` is active-low; two flops synchronise it into the SoC clock domain and it is inverted to the SoC's active-high `reset`. |
 | Power-on | A 4-bit counter holds reset for 15 SoC clocks after configuration, so the SoC starts cleanly even if the button is never pressed. |
 | GPIO | 8 slide switches → `GpioIn`, 8 LEDs ← `GpioOut`. |
@@ -91,24 +91,45 @@ conversion path.
 Pin assignments in `fpga/anvil/Nexys-A7-100T-Master.xdc` are taken from the Digilent
 master XDC shipped with Anvil.
 
-> **Clock frequency.** Two different numbers both matter here, and they are not the
-> same thing:
+> **Clock frequency.** Two different clocks matter here, and they are not the same
+> thing:
 >
-> - **The physical clock reaching the SoC is 100 MHz.** `top.sv` feeds the Nexys A7's
->   on-board oscillator (`CLK100MHZ`, pin E3) straight into the SoC with no divider.
->   `CPU_HZ` in `sw/rules.mk` and `sw/bsp/bsp.h` (default `100000000`) must match this —
->   it is what the BSP uses to compute the UART divider and delays.
-> - **The XDC's `create_clock -period 20.00` (50 MHz) is only a timing-closure
->   target**, not an actual divider — it tells place/route what margin to verify,
->   while the silicon still toggles every 10 ns. A 100 MHz *constraint* (10 ns) was
->   tried and does not close timing, which is why the constraint stays at 50 MHz even
->   though the real clock is faster; see `KnownBugs.md` (`BUG-CLOCK`) for the
->   consequences of that gap.
+> - **The physical oscillator on the `clk` pin is 100 MHz** (`CLK100MHZ`, pin E3).
+>   The XDC constrains the port at its true rate, `create_clock -period 10.00`.
+> - **The SoC's actual operating clock is 25 MHz (`SocClk`)**, produced inside
+>   `top.sv` by the Artix-7's dedicated clock-management hardware: `MMCME2_ADV`
+>   (VCO = 100 MHz × 10 = 1000 MHz, `CLKOUT0` = 1000 / 40 = 25 MHz) through a
+>   `BUFG` for low-skew distribution. `CPU_HZ` in `sw/rules.mk` and
+>   `sw/bsp/bsp.h` (default `25000000`) must match **this** clock, not the
+>   board's raw oscillator rate — it is what the BSP uses to compute the UART
+>   divider and delays.
 >
-> `CPU_HZ` previously defaulted to `50000000` to match the XDC constraint instead of
-> the real clock, which halved every baud rate and delay on hardware: readable UART
-> output needed the terminal set to **twice** the configured baud. If that symptom
-> ever reappears, `CPU_HZ` has drifted from the real clock again.
+> A real divider was chosen over just changing `CPU_HZ` to match the undivided 100
+> MHz (which is what this project did for a while — see `KnownBugs.md`, `BUG-CLOCK`)
+> because the design's logic does not reliably meet timing at 100 MHz; 25 MHz does,
+> with comfortable margin. A plain fabric FSM divider (no hard block) works too and
+> was confirmed on hardware first; `MMCME2_ADV` replaced it since it's the proper
+> use of dedicated silicon for this. (`MMCME2_BASE`, the simplified wrapper, does
+> *not* work in this flow — Yosys's Xilinx techmap doesn't lower it to the
+> `MMCME2_ADV` primitive this toolchain's VPR architecture actually models, so
+> packing fails outright. `MMCME2_ADV` must be instantiated directly.)
+>
+> One toolchain limitation worth knowing if you touch this: the XDC→SDC conversion
+> in this flow follows a declared clock through *combinational* wiring, but not
+> through a register or a clock-management primitive — so a constraint on the `clk`
+> port does not automatically extend to `SocClk`'s domain, divider or hard block.
+> `report_timing.setup.rpt` for a build with `MMCME2_ADV` in place is **completely
+> empty** (0 paths); with the fabric FSM it at least reports the divider's own
+> trivial register. Neither build's own report proves `SocClk`'s domain is safe.
+> The confidence that 25 MHz is safe instead comes from a separate, directly-wired
+> experiment (no divider at all, `clk` fed straight into the SoC, properly and
+> fully constrained at 40 ns/25 MHz) against this same `hipv_soc` RTL, which
+> reported 0 violations and +14 ns worst-case slack — plus confirmation on real
+> hardware with both the FSM and the `MMCME2_ADV` version. See `KnownBugs.md`
+> (`BUG-CLOCK`) for the full history and that measurement.
+>
+> If UART output is readable only at exactly double the configured baud, `CPU_HZ`
+> has drifted from the real 25 MHz clock again (see `BUG-CLOCK`).
 
 ## Build flow
 
@@ -163,15 +184,17 @@ testbench, and both are easy to trip over:
 ## Things to expect on first bring-up
 
 - **Baud rate.** The BSP computes the UART divider as `CPU_HZ / BAUD`, rounded down to
-  a multiple of 16 (the receiver oversamples ×16). The defaults (`CPU_HZ=100000000`,
-  `BAUD=19200`) give 5200 clock cycles per bit, 0.16 % off 19200 baud. Set the terminal
+  a multiple of 16 (the receiver oversamples ×16). The defaults (`CPU_HZ=25000000`,
+  `BAUD=19200`) give 1296 clock cycles per bit, 0.47 % off 19200 baud. Set the terminal
   to 19200 8N1. A `CPU_HZ` that doesn't match the real clock garbles every character —
   readable at exactly double the configured baud is the signature of `CPU_HZ` being
   half the real clock (see `KnownBugs.md`, `BUG-CLOCK`).
-- **Timing closure.** The design meets the 20 ns (50 MHz) *constraint* used for
-  synthesis closure; a 100 MHz constraint does not
-  close. The likely critical path is the crossbar's combinational grant path into the
-  RAM.
+- **Timing closure.** The design meets the 40 ns (25 MHz) constraint comfortably
+  (+14 ns worst-case slack, measured against the unmodified reference-solution ALU);
+  20 ns (50 MHz) does not close, and 10 ns (100 MHz, the board's raw oscillator
+  rate) closes even less. The reference solution's wider ALU (Zba/Zbb/Zmmul) made
+  the margin considerably tighter than the base RV32I core alone — see
+  `KnownBugs.md` (`BUG-CLOCK`) for the measurements.
 - **Reset button.** `CPU_RESETN` is active-low, and is the red button, not one of
   the coloured push buttons.
 - **BRAM budget.** 64 KiB of unified memory is 16 RAMB36 of 135.

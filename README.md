@@ -33,6 +33,7 @@ cocotb + Verilator. Run any testbench with:
 
 If the repo is on a cloud-synced drive, build outside it: `make SIM_BUILD=/tmp/sb`.
 Python dependencies: `pip install -r requirements.txt`; Verilator >= 5.036 required.
+Check your setup before diving in: `python3 scripts/check_setup.py`.
 
 ## Docker
 

@@ -10,9 +10,9 @@ min     OK
 minu    OK
 max     OK
 maxu    OK
+Task 1: bonus
 clz     OK
 cpop    OK
-Task 1: bonus
 ctz     OK
 sext.b  OK
 sext.h  OK

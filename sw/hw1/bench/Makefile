@@ -11,8 +11,8 @@ SRCS = main.c
 # each variant gets its own build directory, so switching never reuses
 # objects compiled with other flags
 BUILD       ?= build$(if $(filter 1,$(REF)),-ref)
-RUN_CYCLES  ?= 3000000
-BAUD         = 1000000
+RUN_CYCLES  ?= 18000000
+BAUD         = 19200
 
 include ../../rules.mk
 

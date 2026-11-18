@@ -93,8 +93,8 @@ USER developer
 WORKDIR /home/developer
 
 ADD --chown=developer:developer \
-    --checksum=sha256:268408073fbfaa0daafdaf4ad2803e3fcf8a7fcf63bd10db1b29d23bb90066a8 \
-    https://raw.githubusercontent.com/jurevreca12/anvil-docker/d1108ec3163e96ede8ffdcf6a7b2d9a6a4604ec2/install.sh \
+    --checksum=sha256:dc41b4a73e67e1318275ebbbd49d7fa94a44b9cb7f71f067bf7f0a88757850cc \
+    https://raw.githubusercontent.com/jurevreca12/DN_2026/54f0ea902e8c21a7dd7e99e06f44332793d2d8c7/install.sh \
     /home/developer/install.sh
 
 # --no-sim:  skip Verilator + cocotb 1.9 (see above)

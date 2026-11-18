@@ -12,6 +12,8 @@ Implement the remaining RV32 Zbb instructions:
 
 | Instruction | Opcode | funct7 (or imm[11:5]) | rs2 field (or shamt) | funct3 | Operation |
 |---|---|---|---|---|---|
+| `clz` | OP-IMM | `0110000` | `00000` | `001` | number of leading zeros (32 for 0) |
+| `cpop` | OP-IMM | `0110000` | `00010` | `001` | number of set bits |
 | `ctz` | OP-IMM | `0110000` | `00001` | `001` | number of trailing zeros (32 for 0) |
 | `sext.b` | OP-IMM | `0110000` | `00100` | `001` | sign-extend byte |
 | `sext.h` | OP-IMM | `0110000` | `00101` | `001` | sign-extend halfword |
@@ -22,7 +24,13 @@ Implement the remaining RV32 Zbb instructions:
 | `orc.b` | OP-IMM | `0010100` | `00111` | `101` | each byte becomes `0xFF` if non-zero, else `0x00` |
 | `rev8` | OP-IMM | `0110100` | `11000` | `101` | reverse the byte order |
 
-The decoding is harder than in Task 1:
+`clz`/`cpop`/`ctz`/`sext.b`/`sext.h` all share `OP-IMM` and funct3 `001` with
+`slli` — a right shift by immediate isn't the only thing that encoding means.
+They're unary (only `rs1`), so the `rs2` field is free to tell them apart from
+each other and from `slli`; that's the same encoding trick Task 1's `andn`/
+`minu` example used for distinguishing by funct7, just on a different field.
+
+The rest of the decoding is harder than that:
 
 - `rori`, `orc.b` and `rev8` share funct3 `101` with `srli` and `srai`, so `funct7[5]`
   alone no longer tells a right shift from the rest.
@@ -42,7 +50,7 @@ still pass too.
 
 | Test | What it checks |
 |---|---|
-| `test_bonus_unary` | `ctz`, `sext.b`, `sext.h`, `zext.h`, `orc.b`, `rev8` on edge cases, single bits and random values |
+| `test_bonus_unary` | `clz`, `cpop`, `ctz`, `sext.b`, `sext.h`, `zext.h`, `orc.b`, `rev8` on edge cases, every single bit and random values |
 | `test_bonus_rotate` | `rol` and `ror` with rotate amounts 0, 1, 15, 16, 31, and values above 31 (only `rs2[4:0]` counts) |
 | `test_bonus_rori` | `rori` with several immediate amounts |
 

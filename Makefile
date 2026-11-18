@@ -6,6 +6,9 @@
 #   make APP=hello fpga                # sw, then flatten/sv2v/anvil build with that firmware
 #   make APP=hello program             # flash the board with the existing build (no rebuild)
 #   make APP=hello all                 # sw -> fpga -> program
+#   make APP=hw1/check all             # same, for sw/hw1/check (the homework self-check)
+#   make APP=hw1/check BONUS=1 all     # ... its bonus variant
+#   make APP=hw1/bench all             # sw/hw1/bench, the cycle-count benchmark
 #   make BOARD=nexys-50t all           # same, targeting the Nexys A7-50T instead of the 100T
 #   make program-nexys100t             # sw -> fpga -> program for the Nexys A7-100T
 #   make program-nexys50t              # sw -> fpga -> program for the Nexys A7-50T
@@ -20,13 +23,25 @@
 #   make docker-shell        # interactive shell, repo at /work
 #   make docker-all APP=blink   # any target, prefixed with docker-
 #
-# APP names a directory under sw/examples/.
+# APP names a directory under sw/examples/, or hw1/check / hw1/bench for
+# the sw/hw1/ homework programs (whose directory and output filename
+# don't follow the sw/examples/<APP>/<APP>.hex convention).
 
 APP   ?= blink
 BOARD ?= nexys-100t
+BONUS ?=
+REF   ?=
 
-SW_DIR     := sw/examples/$(APP)
-FIRMWARE   := $(SW_DIR)/build/$(APP).hex
+ifeq ($(APP),hw1/check)
+  SW_DIR   := sw/hw1/check
+  FIRMWARE := $(SW_DIR)/build$(if $(filter 1,$(BONUS)),-bonus)$(if $(filter 1,$(REF)),-ref)/hw1_check.hex
+else ifeq ($(APP),hw1/bench)
+  SW_DIR   := sw/hw1/bench
+  FIRMWARE := $(SW_DIR)/build$(if $(filter 1,$(REF)),-ref)/hw1_bench.hex
+else
+  SW_DIR   := sw/examples/$(APP)
+  FIRMWARE := $(SW_DIR)/build/$(APP).hex
+endif
 ANVIL_FLOW := scripts/anvil_flow.py
 
 # Anvil target directory and openFPGALoader board name per BOARD, for
@@ -51,7 +66,7 @@ export HIPV_DOCKER_IMAGE := $(DOCKER_IMAGE)
 all: sw fpga program
 
 sw:
-	$(MAKE) -C $(SW_DIR)
+	$(MAKE) -C $(SW_DIR) BONUS=$(BONUS) REF=$(REF)
 
 fpga: sw
 	python3 $(ANVIL_FLOW) build --firmware $(FIRMWARE) --board $(BOARD)
@@ -74,7 +89,7 @@ program-host:
 	openFPGALoader -b $(OFL_BOARD) $(BITSTREAM)
 
 clean:
-	$(MAKE) -C $(SW_DIR) clean
+	$(MAKE) -C $(SW_DIR) BONUS=$(BONUS) REF=$(REF) clean
 	python3 $(ANVIL_FLOW) clean
 
 docker-build:
@@ -87,4 +102,4 @@ docker-shell:
 
 # docker-<target>: run `make <target>` inside the container
 docker-%:
-	docker/run.sh make $* APP=$(APP) BOARD=$(BOARD)
+	docker/run.sh make $* APP=$(APP) BOARD=$(BOARD) BONUS=$(BONUS) REF=$(REF)

@@ -4,9 +4,15 @@
 # the Execute stage (ReadyE, PCSrcE) and the Writeback stage
 # (RegWriteW/RdW/ResultW around the register file write port).
 
+import os
+
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer
+
+import rv32i as rv  # shared encoders, tb/common/rv32i.py
+
+BONUS = os.environ.get("HW1_BONUS", "0") == "1"
 
 # --- control encodings, mirror config/hipv_pkg.sv ---------------------
 
@@ -245,3 +251,157 @@ async def test_backpressure(dut):
     dut.ValidF.value = 0
     await FallingEdge(dut.clk)
     assert dut.RdD.value == 4, "instruction B not loaded after stall"
+
+
+# --- HW1: Zba/Zbb and Zmmul decode -------------------------------------
+#
+# These tests do not depend on how ALUControlD is encoded or on what the
+# multiply control signal is called: they compare *every* control output
+# of the stage between a new instruction and a plain RV32I instruction
+# that has the same funct3 and the same registers. If the decoder ignores
+# the extra funct7/rs2 bits, the two snapshots are identical and the test
+# fails.
+
+_INPUTS = {"clk", "reset", "ValidF", "InstrF", "PCF", "PCPlus4F", "PCSrcE",
+           "ReadyE", "RegWriteW", "RdW", "ResultW"}
+_DATA = {"RD1D", "RD2D", "ImmExtD", "PCD", "PCPlus4D"}
+# internal state that merely echoes the instruction word / handshake
+_INTERNAL = {"InstrD", "ValidDReg", "EnFD", "ImmSrcD"}
+
+
+def ctrl_snapshot(dut):
+    """Value of every control output of the stage, keyed by name."""
+    return {h._name: int(h.value) for h in dut
+            if h._name not in _INPUTS | _DATA | _INTERNAL
+            and hasattr(h, "value")}
+
+
+async def decode(dut, instr):
+    await push_instr(dut, instr)
+    return ctrl_snapshot(dut)
+
+
+def check_alu_op(snap, rd, rs1, rs2=None):
+    """Common to every new register-writing ALU/multiply instruction."""
+    assert snap["ValidD"] == 1
+    assert snap["RegWriteD"] == 1, "result must be written back"
+    assert snap["MemWriteD"] == 0 and snap["BranchD"] == 0
+    assert snap["JumpD"] == 0 and snap["JalrD"] == 0
+    assert snap["ResultSrcD"] == RESULT_ALU
+    assert snap["ALUSrcAD"] == SRCA_RF
+    assert snap["RdD"] == rd and snap["Rs1D"] == rs1
+    if rs2 is not None:
+        assert snap["Rs2D"] == rs2 and snap["ALUSrcBD"] == 0
+
+
+@cocotb.test()
+async def test_zba_zbb_decode(dut):
+    """Zba/Zbb are decoded, and differ from the RV32I op with the same funct3."""
+    await start(dut)
+    # (name, new instruction, plain RV32I instruction with same funct3/regs)
+    rtype = [
+        ("sh1add", rv.sh1add(3, 1, 2), r_type(0x00, 2, 1, 0b010, 3)),
+        ("sh2add", rv.sh2add(3, 1, 2), r_type(0x00, 2, 1, 0b100, 3)),
+        ("sh3add", rv.sh3add(3, 1, 2), r_type(0x00, 2, 1, 0b110, 3)),
+        ("andn", rv.andn(3, 1, 2), r_type(0x00, 2, 1, 0b111, 3)),
+        ("orn", rv.orn(3, 1, 2), r_type(0x00, 2, 1, 0b110, 3)),
+        ("xnor", rv.xnor(3, 1, 2), r_type(0x00, 2, 1, 0b100, 3)),
+        ("min", rv.min_(3, 1, 2), r_type(0x00, 2, 1, 0b100, 3)),
+        ("minu", rv.minu(3, 1, 2), r_type(0x00, 2, 1, 0b101, 3)),
+        ("max", rv.max_(3, 1, 2), r_type(0x00, 2, 1, 0b110, 3)),
+        ("maxu", rv.maxu(3, 1, 2), r_type(0x00, 2, 1, 0b111, 3)),
+    ]
+    itype = [  # one-operand: I-type encoding, rs2 field is part of the opcode
+        ("clz", rv.clz(3, 1), i_type(0, 1, 0b001, 3)),
+        ("cpop", rv.cpop(3, 1), i_type(0, 1, 0b001, 3)),
+    ]
+    if BONUS:
+        rtype += [
+            ("rol", rv.rol(3, 1, 2), r_type(0x00, 2, 1, 0b001, 3)),
+            ("ror", rv.ror(3, 1, 2), r_type(0x00, 2, 1, 0b101, 3)),
+            ("zext.h", rv.zext_h(3, 1), r_type(0x00, 0, 1, 0b100, 3)),
+        ]
+        itype += [
+            ("ctz", rv.ctz(3, 1), i_type(0, 1, 0b001, 3)),
+            ("sext.b", rv.sext_b(3, 1), i_type(0, 1, 0b001, 3)),
+            ("sext.h", rv.sext_h(3, 1), i_type(0, 1, 0b001, 3)),
+            ("rori", rv.rori(3, 1, 5), i_type(5, 1, 0b101, 3)),
+            ("orc.b", rv.orc_b(3, 1), i_type(0, 1, 0b101, 3)),
+            ("rev8", rv.rev8(3, 1), i_type(0, 1, 0b101, 3)),
+        ]
+
+    seen = {}
+    for name, new, base in rtype + itype:
+        base_snap = await decode(dut, base)
+        snap = await decode(dut, new)
+        is_r = (new & 0x7F) == 0b0110011
+        check_alu_op(snap, 3, 1, 2 if is_r and name != "zext.h" else None)
+        assert snap["Funct3D"] == (new >> 12) & 7
+        assert snap != base_snap, f"{name} decodes like a plain RV32I op"
+        seen[name] = snap
+    # different operations must not collapse onto one control word
+    names = list(seen)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            assert seen[a] != seen[b], f"{a} and {b} share one control word"
+
+
+@cocotb.test()
+async def test_zba_zbb_same_funct3_distinct(dut):
+    """Instructions that differ only in funct7 / rs2 get different controls."""
+    await start(dut)
+    groups = {
+        "xor/xnor/min": [r_type(0x00, 2, 1, 0b100, 3), rv.xnor(3, 1, 2),
+                         rv.min_(3, 1, 2), rv.sh2add(3, 1, 2)],
+        "or/orn/max/sh3add": [r_type(0x00, 2, 1, 0b110, 3), rv.orn(3, 1, 2),
+                              rv.max_(3, 1, 2), rv.sh3add(3, 1, 2)],
+        "and/andn/maxu": [r_type(0x00, 2, 1, 0b111, 3), rv.andn(3, 1, 2),
+                          rv.maxu(3, 1, 2)],
+        "slt/sh1add": [r_type(0x00, 2, 1, 0b010, 3), rv.sh1add(3, 1, 2)],
+        "srl/sra/minu": [r_type(0x00, 2, 1, 0b101, 3),
+                         r_type(0x20, 2, 1, 0b101, 3), rv.minu(3, 1, 2)],
+        "slli/clz/cpop": [i_type(0, 1, 0b001, 3), rv.clz(3, 1),
+                          rv.cpop(3, 1)],
+    }
+    for label, instrs in groups.items():
+        snaps = [await decode(dut, i) for i in instrs]
+        for i in range(len(snaps)):
+            for j in range(i + 1, len(snaps)):
+                assert snaps[i] != snaps[j], \
+                    f"{label}: instructions {i} and {j} decode identically"
+
+
+@cocotb.test()
+async def test_zmmul_decode(dut):
+    """mul/mulh/mulhsu/mulhu reach the multiplier; div/rem write nothing."""
+    await start(dut)
+    plain = {0b000: r_type(0x00, 2, 1, 0b000, 3),   # add
+             0b001: r_type(0x00, 2, 1, 0b001, 3),   # sll
+             0b010: r_type(0x00, 2, 1, 0b010, 3),   # slt
+             0b011: r_type(0x00, 2, 1, 0b011, 3)}   # sltu
+    muls = [rv.mul(3, 1, 2), rv.mulh(3, 1, 2), rv.mulhsu(3, 1, 2),
+            rv.mulhu(3, 1, 2)]
+    snaps = []
+    for f3, instr in enumerate(muls):
+        base_snap = await decode(dut, plain[f3])
+        snap = await decode(dut, instr)
+        check_alu_op(snap, 3, 1, 2)
+        assert snap["Funct3D"] == f3, "multiplier selects the variant by funct3"
+        assert snap != base_snap, \
+            f"{['mul', 'mulh', 'mulhsu', 'mulhu'][f3]} decodes like its RV32I twin"
+        snaps.append(snap)
+    # the multiply must be flagged the same way for all four variants:
+    # everything except Funct3D (and the ALU code, which is a don't-care
+    # for a multiply) is shared
+    for s in snaps[1:]:
+        shared = [k for k in s if k not in ("Funct3D", "ALUControlD")
+                  and s[k] != snaps[0][k]]
+        assert not shared, f"mul variants disagree on {shared}"
+
+    # M-extension divides are not implemented: they must be inert
+    for name, instr in [("div", rv.div(3, 1, 2)), ("divu", rv.divu(3, 1, 2)),
+                        ("rem", rv.rem(3, 1, 2)), ("remu", rv.remu(3, 1, 2))]:
+        snap = await decode(dut, instr)
+        assert snap["RegWriteD"] == 0, f"{name} must not write a register"
+        assert snap["MemWriteD"] == 0 and snap["BranchD"] == 0
+        assert snap["JumpD"] == 0 and snap["JalrD"] == 0
